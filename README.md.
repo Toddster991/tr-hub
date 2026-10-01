@@ -1,0 +1,1941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TR Design Build: Forecast, schedule & materials</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ECEEEC; --paper:#F8F9F8; --ink:#1E272D; --muted:#5B666D; --rule:#C9CFCF;
+  --active:#3D5A73; --design:#D9A816; --field:#FFFFFF; --now:#E2E8EC; --err:#B3261E;
+  --load1:#8DBBE3; --load2:#E08A1E; --load3:#C8362F;
+  --sans:"Barlow","Segoe UI",system-ui,-apple-system,sans-serif;
+  --cond:"Barlow Condensed","Arial Narrow","Segoe UI",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#151A1D; --paper:#1D2428; --ink:#E6EAEB; --muted:#9AA5AB; --rule:#34403F;
+    --active:#86A9C7; --design:#E6BC3A; --field:#232B30; --now:#26323A; --err:#F2B8B5;
+    --load1:#6F9CCB; --load2:#EFA24A; --load3:#E5605A;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#151A1D; --paper:#1D2428; --ink:#E6EAEB; --muted:#9AA5AB; --rule:#34403F;
+  --active:#86A9C7; --design:#E6BC3A; --field:#232B30; --now:#26323A; --err:#F2B8B5;
+  --load1:#6F9CCB; --load2:#EFA24A; --load3:#E5605A;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.45}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--active);outline-offset:2px}
+.topbar{display:flex;align-items:baseline;gap:14px;padding:18px 28px;border-bottom:1px solid var(--rule)}
+.topbar strong{font-family:var(--cond);font-size:22px}
+.topbar span{color:var(--muted);font-size:14px}
+.topbar .status{margin-left:auto;font-size:13px}
+.wrap{display:grid;grid-template-columns:320px minmax(0,1fr);max-width:1440px;margin:0 auto}
+aside{padding:22px 24px;border-right:1px solid var(--rule)}
+main{padding:24px 32px 56px;min-width:0}
+h2{font-family:var(--cond);font-weight:700;font-size:24px;margin:0 0 12px}
+.addbtn{width:100%;padding:9px;border:1px dashed var(--muted);border-radius:6px;background:transparent;cursor:pointer;font-weight:500;margin-bottom:18px}
+.addbtn:hover{border-style:solid}
+.group-h{font-size:14px;font-weight:600;color:var(--muted);margin:14px 0 6px;display:flex;justify-content:space-between}
+.joblist{list-style:none;margin:0;padding:0}
+.joblist button{display:block;width:100%;text-align:left;background:transparent;border:0;border-left:3px solid transparent;padding:7px 10px;cursor:pointer;border-radius:0 4px 4px 0}
+.joblist button:hover{background:var(--paper)}
+.joblist button[aria-current="true"]{background:var(--paper);border-left-color:var(--ink)}
+.joblist .jn{display:block;font-weight:500}
+.joblist .jm{display:block;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);font-size:14px;margin:6px 0}
+.editor{margin-top:22px;padding-top:18px;border-top:1px solid var(--ink)}
+label{display:block;font-size:14px;font-weight:500;color:var(--muted);margin:0 0 5px}
+.field{margin-bottom:14px}
+input,select{width:100%;font:500 16px var(--sans);color:var(--ink);background:var(--field);border:1px solid var(--rule);border-radius:4px;padding:8px 10px}
+.row2{display:grid;grid-template-columns:1fr 110px;gap:8px}
+.seg{display:flex;border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.seg button{flex:1;font-weight:500;font-size:15px;padding:8px 10px;border:0;background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.preview{font-size:14px;margin:4px 0 14px;font-variant-numeric:tabular-nums}
+.actions{display:flex;gap:8px}
+.primary{flex:1;padding:9px 12px;border:0;border-radius:6px;background:var(--ink);color:var(--bg);font-weight:600;cursor:pointer}
+.ghost{padding:9px 12px;border:1px solid var(--rule);border-radius:6px;background:transparent;cursor:pointer}
+.ghost.danger{color:var(--err);border-color:var(--err)}
+.calc{margin:6px 0 16px;padding:10px 12px;background:var(--paper);border:1px solid var(--rule);border-radius:6px}
+.calc-h{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 4px}
+.calc-row{display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-variant-numeric:tabular-nums}
+.calc-row span:first-child{color:var(--muted)}
+.calc-row b{font-weight:600}
+.calc-sub{font-size:13px;color:var(--muted);text-align:right}
+.sw{position:relative;display:inline-block;flex:none;width:30px;height:18px;border-radius:9px;border:0;padding:0;margin:0 8px 0 0;vertical-align:-4px;background:var(--rule);cursor:pointer}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--paper);transition:left .15s}
+.sw[aria-checked="true"]{background:var(--design)}
+.sw[aria-checked="true"]::after{left:14px}
+@media (prefers-reduced-motion: reduce){.sw::after{transition:none}}
+tr.off td{color:var(--muted)}
+.tabs{display:inline-flex;margin-bottom:18px}
+.cnt{font-weight:400;color:var(--muted);font-size:13px;margin-left:4px}
+td.heat{text-align:center;font-weight:600}
+td.b{padding-left:0;padding-right:0;min-width:28px}
+.bar{display:block;height:12px;background:var(--active)}
+.bar.lv1{background:var(--load1)} .bar.lv2{background:var(--load2)} .bar.lv3{background:var(--load3)}
+.mk.dsg{background:var(--design)}
+tr.grp-end td{border-bottom:2px solid var(--ink)}
+.mk.lv1{background:var(--load1)} .mk.lv2{background:var(--load2)} .mk.lv3{background:var(--load3)}
+.mk.stripe{background:var(--muted);background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.55) 0 2px,transparent 2px 5px)}
+.refbox{display:inline-flex;align-items:center;gap:8px;margin:0;font-size:14px;color:var(--muted);font-weight:500}
+.refbox input{width:130px;padding:5px 8px;font-size:15px}
+.refbox select{width:auto;padding:6px 8px;font-size:15px}
+td.job .mk{margin-right:6px}
+.dp0{background:#5E8C6A} .dp1{background:#8A6BB0} .dp2{background:#B8664A} .dp3{background:#3F8FA8} .dp4{background:#3D5A73} .dp5{background:#A3894A}
+.bar.dp0{background:#5E8C6A} .bar.dp1{background:#8A6BB0} .bar.dp2{background:#B8664A} .bar.dp3{background:#3F8FA8} .bar.dp4{background:#3D5A73} .bar.dp5{background:#A3894A}
+#legDept{display:inline-flex;gap:16px;flex-wrap:wrap}
+tr.jobhead td{font-weight:600}
+td.dates{color:var(--muted);font-size:13px}
+.tpl{margin-top:22px;border:1px solid var(--rule);border-radius:6px;background:var(--paper)}
+.tpl summary{cursor:pointer;padding:12px 14px;font-weight:600}
+.tpl .inner{padding:0 14px 14px;overflow-x:auto}
+.tpl table{min-width:640px}
+.tpl td{text-align:left;padding:4px 6px;border-bottom:0}
+.tpl td:first-child{position:static;border-right:0;max-width:none}
+.tpl th{text-align:left;padding:4px 6px}
+.tpl th:first-child{position:static;border-right:0}
+.tpl input,.tpl select{padding:5px 7px;font-size:15px}
+.tpl input[type=number]{width:70px}
+.tpl input[type=checkbox]{width:auto}
+.tpl .rm{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:4px 8px}
+.tpl .rm:hover{color:var(--err)}
+.tpl .tplact{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
+.tpl .fixed{color:var(--muted);font-size:14px}
+.tablewrap.tall{max-height:78vh;overflow:auto}
+.tablewrap.tall thead th{position:sticky;top:0;z-index:2;background:var(--paper)}
+.tablewrap.tall thead th:first-child{z-index:3}
+th.bd-h{text-align:left;color:var(--ink);font-weight:600;border-right:1px solid var(--rule);vertical-align:bottom}
+.bd-sup{display:block;font-weight:400;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+td.bd-wk{font-size:13px}
+.bd-d{color:var(--muted);font-size:12px}
+tr.bd-month td{border-top:1px solid var(--ink)}
+td.bd{text-align:left;font-size:12px;padding:3px 7px;border-right:1px solid var(--rule);max-width:220px;overflow:hidden;text-overflow:ellipsis}
+td.bd.fill{font-weight:600;border-bottom-color:rgba(255,255,255,.3)}
+td.bd.con{border-bottom-color:transparent}
+.tx{background:none!important;font-weight:600}
+.tx.dp0{color:#4F7A5B} .tx.dp1{color:#7A58A6} .tx.dp2{color:#B0553A} .tx.dp3{color:#2F7F98} .tx.dp4{color:#3D5A73} .tx.dp5{color:#8C733A}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .tx.dp0{color:#8FC39C} :root:not([data-theme="light"]) .tx.dp1{color:#B79BDB} :root:not([data-theme="light"]) .tx.dp2{color:#E39A80} :root:not([data-theme="light"]) .tx.dp3{color:#7FC3D8} :root:not([data-theme="light"]) .tx.dp4{color:#9DB8D3} :root:not([data-theme="light"]) .tx.dp5{color:#D2B878} }
+table.grid-fixed{table-layout:fixed;min-width:0}
+table.grid-fixed th, table.grid-fixed td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;max-width:none}
+.tablewrap.z-s th.bd-h{font-size:12px;padding:6px 5px}
+.tablewrap.z-s td.bd{font-size:11px;padding:2px 5px}
+.tablewrap.z-l td.bd{font-size:13px}
+.tablewrap.tall{cursor:grab}
+.tablewrap.tall.dragging{cursor:grabbing;user-select:none}
+.tablewrap{scrollbar-color:var(--muted) transparent}
+.tablewrap::-webkit-scrollbar{width:12px;height:12px}
+.tablewrap::-webkit-scrollbar-thumb{background:var(--muted);border-radius:6px;border:3px solid var(--paper)}
+.tablewrap::-webkit-scrollbar-corner{background:var(--paper)}
+#focusBtn{padding:7px 12px;font-weight:500}
+body.focus .topbar, body.focus aside, body.focus #mainTitle, body.focus .summary, body.focus .note, body.focus .tpl{display:none!important}
+body.focus .wrap{grid-template-columns:minmax(0,1fr);max-width:none}
+body.focus main{padding:10px 14px 10px}
+body.focus .tabs{margin-bottom:10px}
+body.focus .tablewrap{margin-top:10px}
+body.focus .tablewrap.tall{max-height:calc(100vh - 120px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+th.bd-h{cursor:pointer}
+th.bd-h:hover{background:var(--now)}
+.stepdates{margin:4px 0 14px;padding:10px 12px;border:1px solid var(--rule);border-radius:6px;background:var(--paper)}
+.stepdates .fixed{color:var(--muted);font-size:14px;margin:0}
+.chk{display:flex;gap:8px;align-items:flex-start;color:var(--ink);font-size:14px;margin:0 0 6px}
+.chk input{width:auto;margin-top:3px}
+.steprow{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:6px 0;border-top:1px solid var(--rule);align-items:baseline}
+.steprow .nm{font-size:14px;font-weight:500}
+.steprow .dt{font-size:12px;color:var(--muted);white-space:nowrap}
+.steprow .ins{grid-column:1/-1;display:flex;gap:6px;align-items:center}
+.steprow input[type=date]{padding:4px 6px;font-size:13px;min-width:0}
+.steprow.adj .nm::after{content:" adjusted";font-size:12px;font-weight:600;color:#C9820A;margin-left:4px}
+.steprow .rm{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:17px;padding:2px 4px}
+.bar.tall{height:18px}
+#auth{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#auth[hidden]{display:none}
+.authcard{width:min(400px,100%);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:28px}
+.authbrand{margin:0 0 4px;color:var(--muted);font-size:14px;font-weight:600}
+#whoami{font-size:13px;color:var(--muted)}
+body.ro #addJob, body.ro #peopleBox, body.ro #ctBox, body.ro #tplBox{display:none!important}
+body.ro .sw{pointer-events:none;opacity:.6}
+body.ro td[data-drag]{cursor:default}
+td[data-drag]{cursor:ns-resize}
+body.moving, body.moving *{cursor:ns-resize!important;user-select:none}
+#dragTip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;font-weight:500;padding:5px 9px;border-radius:5px;white-space:nowrap}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:45;display:flex;gap:14px;align-items:center;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:15px;max-width:calc(100vw - 32px)}
+#toast button{background:transparent;border:1px solid var(--bg);color:var(--bg);border-radius:5px;padding:4px 10px;cursor:pointer;font-weight:600}
+[hidden]#dragTip,[hidden]#toast{display:none}
+#modalBack{display:none;position:fixed;inset:0;background:rgba(10,15,18,.45);z-index:34}
+body.editing #modalBack{display:block}
+#editor{position:fixed;z-index:35;top:50%;left:50%;transform:translate(-50%,-50%);width:min(900px,calc(100vw - 24px));max-height:calc(100vh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:auto;background:var(--bg);border:1px solid var(--ink);border-radius:10px;margin:0;padding:0;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+#editor .mhead{position:sticky;top:0;z-index:2;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 22px 12px;border-bottom:1px solid var(--rule)}
+#editor .mhead h2{margin:0}
+#editor .mhead .seg{width:auto}
+#editor .msec{padding:18px 22px 4px}
+#editor .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 26px}
+#editor .formerr{margin:0 22px 8px}
+#editor .mfoot{position:sticky;bottom:0;background:var(--bg);display:flex;gap:8px;align-items:center;padding:12px 22px;border-top:1px solid var(--rule)}
+#editor .mfoot .grow{flex:1}
+#editor .mfoot .primary{flex:none;padding:9px 18px}
+.stepdates:empty{display:none}
+.mtable{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--paper)}
+.mtable table{min-width:760px}
+.mtable th,.mtable td{text-align:left;padding:6px 8px;vertical-align:top}
+.mtable th:first-child,.mtable td:first-child{position:static;border-right:0;max-width:none}
+.mtable input,.mtable select{padding:4px 6px;font-size:14px}
+.mtable input[type=number]{width:74px}
+.mtable tr.warn td{background:color-mix(in srgb,var(--load3) 8%,transparent)}
+.mtable tr.skip td{color:var(--muted)}
+.mtable tr.skip td b{font-weight:500;text-decoration:line-through}
+.sub2{display:block;font-size:12px;color:var(--muted)}
+.flag{display:inline-block;margin:3px 4px 0 0;padding:1px 7px;border-radius:10px;font-size:12px;font-weight:600;color:#fff;background:var(--load3)}
+tr.mrow{cursor:pointer}
+tr.mrow:hover td{background:var(--now)}
+tr.mrow td{text-align:left}
+tr.sub.late td{color:var(--load3)}
+table.mat th{text-align:left}
+.cols2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:0 14px;max-width:520px;margin-top:12px}
+#ctEditor td{vertical-align:middle}
+.pill{display:inline-block;margin:3px 4px 0 0;padding:1px 7px;border-radius:10px;font-size:12px;font-weight:600;background:var(--now);color:var(--ink)}
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+th.sortable:hover{color:var(--ink)}
+th.sortable.on{color:var(--ink);font-weight:600}
+th.sortable .arr{font-size:10px;margin-left:4px}
+select.inl{width:auto;padding:3px 6px;font-size:14px;cursor:pointer}
+.people-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;max-width:760px;margin-top:8px}
+.person{padding:14px 12px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);font-size:17px;font-weight:600;cursor:pointer;text-align:left}
+.person:hover{border-color:var(--ink)}
+.linkbtn{border:0;background:none;padding:0;color:var(--active);text-decoration:underline;cursor:pointer;font:inherit;font-size:15px;margin-left:6px}
+.phl{font-size:11px;font-weight:500;opacity:.9}
+#ctEditor .tpl table, #ctEditor table{min-width:0;margin-bottom:4px}
+#ctEditor input[type=number]{width:80px}
+#ctEditor select{width:auto}
+@media (max-width:720px){ #editor .cols{grid-template-columns:1fr} }
+.formerr{color:var(--err);font-size:14px;margin:0 0 10px}
+[hidden]{display:none!important}
+h1{font-family:var(--cond);font-weight:700;font-size:clamp(34px,5vw,52px);line-height:1;margin:0 0 10px}
+.summary{font-size:19px;max-width:66ch;margin:0 0 22px}
+.summary b{font-weight:600}
+.mk{display:inline-block;width:.7em;height:.7em;border-radius:2px;margin-right:4px;vertical-align:.02em}
+.mk.a{background:var(--active)} .mk.d{background:var(--design)}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:10px;flex-wrap:wrap}
+.legend{font-size:14px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.legend label{display:inline-flex;align-items:center;gap:6px;margin:0;font-size:14px;cursor:pointer}
+.legend input{width:auto}
+.chart{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:8px 4px 4px;overflow-x:auto}
+.chart svg{display:block;height:auto}
+.chart text{font-family:var(--sans);font-size:12px;fill:var(--muted)}
+.tablewrap{overflow-x:auto;margin-top:24px;border:1px solid var(--rule);border-radius:6px;background:var(--paper)}
+table{border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;font-size:14px;min-width:100%}
+th,td{padding:7px 12px;white-space:nowrap;text-align:right;border-bottom:1px solid var(--rule)}
+th{font-weight:500;color:var(--muted);border-bottom:1px solid var(--ink)}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--paper);border-right:1px solid var(--rule);z-index:1;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.now{background:var(--now)}
+tr.sub td{font-weight:600}
+tr.sub td:first-child .mk{margin-right:6px}
+tr.grand td{font-weight:600;border-top:1px solid var(--ink);border-bottom:0}
+td.tot,th.tot{border-left:1px solid var(--rule)}
+td.job{padding-left:18px}
+.zero{color:var(--rule)}
+.note{font-size:14px;color:var(--muted);margin-top:10px}
+@media (max-width:860px){
+  .wrap{grid-template-columns:1fr}
+  aside{border-right:0;border-bottom:1px solid var(--rule);padding:20px}
+  main{padding:20px}
+  .topbar{padding:14px 20px}
+}
+</style>
+</head>
+<body>
+<div class="topbar"><strong>Billing forecast</strong><span>TR Design Build</span><span class="status" id="saveStatus">Loading jobs…</span><span id="whoami"></span><button type="button" class="linkbtn" id="signOut" hidden>Sign out</button></div>
+<div id="auth" hidden>
+  <div class="authcard">
+    <p class="authbrand">TR Design Build</p>
+    <h1 style="font-size:34px">Sign in</h1>
+    <div id="authStep1">
+      <p class="fixed" style="font-size:15px;margin:0 0 14px">Enter your work email and we'll send you a sign-in code.</p>
+      <div class="field"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="name@company.com"></div>
+      <button type="button" class="primary" id="authSend" style="width:100%">Email me a code</button>
+    </div>
+    <div id="authStep2" hidden>
+      <p class="fixed" style="font-size:15px;margin:0 0 14px">Check your email. Type the code here, or click the link in the email.</p>
+      <div class="field"><label for="authCode">Code</label><input id="authCode" inputmode="numeric" autocomplete="one-time-code" placeholder="123456"></div>
+      <button type="button" class="primary" id="authVerify" style="width:100%">Sign in</button>
+      <button type="button" class="linkbtn" id="authBack" style="margin:12px 0 0">Use a different email</button>
+    </div>
+    <div id="authDenied" hidden>
+      <p style="font-size:15px">You're signed in as <b id="authDeniedEmail"></b>, but that email isn't on the team list yet. Ask Todd to add it, then sign in again.</p>
+      <button type="button" class="ghost" id="authDeniedOut">Sign out</button>
+    </div>
+    <p class="formerr" id="authErr" hidden></p>
+  </div>
+</div>
+<div class="wrap">
+  <aside>
+    <h2>Jobs</h2>
+    <button type="button" class="addbtn" id="addJob">Add a job</button>
+    <div id="jobList"></div>
+
+  </aside>
+
+  <main>
+    <div class="seg tabs" role="group" aria-label="View" id="tabSeg">
+      <button type="button" data-tab="home" aria-pressed="true">My list</button>
+      <button type="button" data-tab="billing" aria-pressed="false">Billing</button>
+      <button type="button" data-tab="supers" aria-pressed="false">Supervisors</button>
+      <button type="button" data-tab="schedule" aria-pressed="false">Schedule</button>
+      <button type="button" data-tab="materials" aria-pressed="false">Materials</button>
+    </div>
+    <h1 id="mainTitle">All jobs</h1>
+    <p class="summary" id="summary"></p>
+    <div class="toolbar">
+      <div class="legend">
+        <span id="legActive"><span class="mk a"></span>Active</span>
+        <span id="legDept" hidden></span>
+        <span id="legLoad" hidden><span><span class="mk lv1"></span>1 job</span> <span><span class="mk lv2"></span>2 jobs</span> <span><span class="mk lv3"></span>3 or more</span></span>
+        <label><input type="checkbox" id="showDesign" checked><span class="mk d"></span>In design</label>
+      </div>
+      <div class="seg" role="group" aria-label="Arrange schedule" id="schedSeg" hidden>
+        <button type="button" data-sview="job" aria-pressed="true">By job</button>
+        <button type="button" data-sview="dept" aria-pressed="false">By department</button>
+        <button type="button" data-sview="board" aria-pressed="false">Board</button>
+      </div>
+      <div class="seg" role="group" aria-label="Column width" id="zoomSeg" hidden>
+        <button type="button" data-zoom="s" aria-pressed="false">Compact</button>
+        <button type="button" data-zoom="m" aria-pressed="true">Normal</button>
+        <button type="button" data-zoom="l" aria-pressed="false">Wide</button>
+      </div>
+      <label class="refbox" id="ownerWrap" hidden>Show <select id="ownerPick"></select></label>
+      <div class="seg" role="group" aria-label="Arrange materials" id="matSeg" hidden>
+        <button type="button" data-mview="urgency" aria-pressed="true">By urgency</button>
+        <button type="button" data-mview="week" aria-pressed="false">By week</button>
+        <button type="button" data-mview="all" aria-pressed="false">All items</button>
+      </div>
+      <label class="refbox" id="msortWrap" hidden>Sort by <select id="msort">
+        <option value="order">Order-by date</option><option value="need">Needed on site</option><option value="status">Status</option><option value="lead">Lead time</option><option value="job">Job</option><option value="item">Item</option><option value="owner">Owner</option>
+      </select></label>
+      <div class="seg" role="group" aria-label="Date to list by" id="mdateSeg" hidden>
+        <button type="button" data-mdate="order" aria-pressed="true">Order by</button>
+        <button type="button" data-mdate="need" aria-pressed="false">Needed on site</button>
+      </div>
+      <label class="refbox" id="deptWrap" hidden>Department <select id="deptPick"></select></label>
+      <label class="refbox" id="sortWrap" hidden>Order jobs by <select id="boardSort"></select></label>
+      <button type="button" class="ghost" id="focusBtn">Full screen</button>
+      <div class="seg" role="group" aria-label="Group by" id="periodSeg">
+        <button type="button" data-period="week" aria-pressed="true">Week</button>
+        <button type="button" data-period="month" aria-pressed="false">Month</button>
+        <button type="button" data-period="quarter" aria-pressed="false">Quarter</button>
+        <button type="button" data-period="year" aria-pressed="false">Year</button>
+      </div>
+    </div>
+    <div class="chart" id="chart"></div>
+    <div id="homePick" hidden></div>
+    <div class="tablewrap" id="tableWrap"><table id="table"></table></div>
+    <p class="note" id="noteMats" hidden>Each job's construction type sets its phases, which stretch to fit the job's construction length, and which materials are needed at which phase. An item's order-by date is the date it's needed on site, minus its lead time, minus the buffer. Until a product is picked, the long end of the lead time is used. Click any row to open that job's materials.</p>
+    <details class="tpl" id="peopleBox" hidden><summary>People</summary><div id="peopleEditor"></div></details>
+    <details class="tpl" id="ctBox" hidden><summary>Construction types, phases and lead times</summary><div id="ctEditor"></div></details>
+    <p class="note" id="noteSched" hidden>Jobs in design are scheduled backward from their production start using the standard steps below, so the design kickoff date is worked out for you. Steps marked "alongside previous" start at the same time as the step before them. Construction uses each job's own duration. Active jobs show construction only, from the as-of date through the months remaining. In the By department view, bars turn orange when a department has two jobs going at once and red at three or more.</p>
+    <details class="tpl" id="tplBox" hidden><summary>Standard steps and durations</summary><div id="tplEditor"></div></details>
+    <p class="note" id="noteSupers" hidden>Each job counts toward its supervisor in every period it's billing. The number on a supervisor's row is how many of their jobs are running then, and the bars are colored to match: light blue for one job, orange for two, red for three or more. Jobs in design that are turned off, or hidden with the In design checkbox, aren't counted.</p>
+    <p class="note" id="noteBilling">Weeks end on Friday. Each job's full contract value (deposit included) is spread evenly across its production weeks. Active jobs bill their remaining balance evenly from the week after the "as of" date. Months convert to weeks at 52 a year. The current period is shaded.</p>
+  </main>
+</div>
+
+<div id="modalBack"></div>
+<form class="editor" id="editor" hidden autocomplete="off" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+  <div class="mhead">
+    <h2 id="editorTitle">New job</h2>
+    <div class="seg" role="group" aria-label="Job sections" id="secSeg">
+      <button type="button" data-sec="details" aria-pressed="true">Details</button>
+      <button type="button" data-sec="schedule" aria-pressed="false">Schedule</button>
+      <button type="button" data-sec="materials" aria-pressed="false">Materials</button>
+    </div>
+  </div>
+  <div class="msec" data-secbox="details">
+    <div class="cols">
+      <div>
+        <div class="field"><label for="f-name">Job name</label><input id="f-name" required></div>
+        <div class="field"><label>Status</label>
+          <div class="seg" role="group" aria-label="Status">
+            <button type="button" data-status="active" aria-pressed="true">Active</button>
+            <button type="button" data-status="design" aria-pressed="false">In design</button>
+          </div>
+        </div>
+        <div class="field"><label for="f-super">Supervisor</label><input id="f-super" list="superList" placeholder="Pick or type a name"><datalist id="superList"></datalist></div>
+        <div id="f-design" hidden>
+          <div class="field"><label for="f-price">Sell price</label><input id="f-price" inputmode="decimal"></div>
+          <div class="field"><label for="f-start">Production start</label><input id="f-start" type="date"></div>
+          <div class="field"><label for="f-dur">Construction duration</label>
+            <div class="row2"><input id="f-dur" type="number" min="1" step="1"><select id="f-unit" aria-label="Duration unit"><option value="weeks">weeks</option><option value="months">months</option></select></div>
+          </div>
+        </div>
+        <div id="f-active">
+          <div class="field"><label for="f-revised">Revised contract, with change orders</label><input id="f-revised" inputmode="decimal"></div>
+          <div class="field"><label for="f-invoiced">Amount invoiced</label><input id="f-invoiced" inputmode="decimal"></div>
+          <div class="field"><label for="f-value">Value complete to date</label><input id="f-value" inputmode="decimal"></div>
+          <div class="field"><label for="f-months">Months remaining</label><input id="f-months" type="number" min="0.5" step="0.5"></div>
+          <div class="field"><label for="f-asof">As of</label><input id="f-asof" type="date"></div>
+        </div>
+      </div>
+      <div><div class="calc" id="f-calc" aria-live="polite"></div></div>
+    </div>
+  </div>
+  <div class="msec" data-secbox="schedule" hidden>
+    <div class="cols">
+      <div>
+        <div class="field"><label for="f-ctype">Construction type</label><select id="f-ctype"></select></div>
+        <div class="field" id="f-constartWrap" hidden><label for="f-constart">Construction started</label><input id="f-constart" type="date"></div>
+        <div id="f-phases"></div>
+      </div>
+      <div><div class="stepdates" id="f-steps"></div></div>
+    </div>
+  </div>
+  <div class="msec" data-secbox="materials" hidden>
+    <div id="f-mats"></div>
+  </div>
+  <p class="formerr" id="f-err" hidden></p>
+  <div class="mfoot">
+    <button type="button" class="ghost danger" id="f-delete" hidden>Delete job</button>
+    <span class="grow"></span>
+    <button type="button" class="ghost" id="f-cancel">Cancel</button>
+    <button type="submit" class="primary" id="f-save">Save job</button>
+  </div>
+</form>
+<div id="dragTip" hidden></div>
+<div id="toast" role="status" hidden></div>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const num = s => { const v = parseFloat(String(s ?? '').replace(/[^0-9.]/g,'')); return isFinite(v) ? v : NaN; };
+  const parseDate = s => { if(!s || typeof s!=='string') return null; const [y,m,d] = s.split('-').map(Number); if(!y||!m||!d) return null; return new Date(y,m-1,d); };
+  const iso = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const addDays = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+  const friday = d => addDays(d, (5 - d.getDay() + 7) % 7);
+  const dayNum = d => Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())/864e5);
+  const fromDayNum = n => { const u = new Date(n*864e5); return new Date(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate()); };
+  const fmtDate = d => d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const fmtShort = d => d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const money = v => { const c = Math.round(v*100)%100 !== 0; return v.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:c?2:0,maximumFractionDigits:c?2:0}); };
+  const money0 = v => Math.round(v).toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+  const moneyK = v => v >= 1e6 ? '$'+(v/1e6).toLocaleString('en-US',{maximumFractionDigits:2})+'M' : v >= 1000 ? '$'+(v/1000).toLocaleString('en-US',{maximumFractionDigits:1})+'k' : '$'+Math.round(v);
+  const monthsToWeeks = m => Math.max(1, Math.round(m*52/12));
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  const S = { msort:'order', mdir:1, owner:'all', matView:'urgency', matDate:'order', people:null, sec:'details', matEdit:{}, deptView:'Design', boardSort:'first', zoom:'m', sview:'job', template:null, tab:'home', me:(()=>{ try{ return localStorage.getItem('fc_me') || ''; }catch(e){ return ''; } })(), jobs:[], db:null, storage:'loading', sel:null, editStatus:'active', period:'week', showDesign:true, confirmDel:false };
+
+  function split(total, n){
+    const cents = Math.round(total*100), each = Math.floor(cents/n), out = [];
+    for(let i=0;i<n;i++) out.push((i===n-1 ? cents-each*(n-1) : each)/100);
+    return out;
+  }
+
+  // Active jobs: balance to bill = revised contract − invoiced; cost to complete = revised contract − value complete.
+  // Jobs saved before these fields existed fall back to their stored balance.
+  function activeCalc(j){
+    const r = num(j.revised), inv = num(j.invoiced) || 0, val = num(j.valueComplete) || 0;
+    if(r > 0) return { balance: Math.round((r-inv)*100)/100, ctc: Math.round((r-val)*100)/100, hasContract:true };
+    return { balance: num(j.balance), ctc: num(j.ctc), hasContract:false };
+  }
+
+  // Weekly billing schedule for one job: [{date (a Friday), amt}]
+  function schedule(j){
+    let total, n, first;
+    if(j.status === 'design'){
+      total = num(j.price); const start = parseDate(j.start); const d = parseFloat(j.duration);
+      if(!(total>0) || !start || !(d>0)) return null;
+      n = j.durUnit === 'months' ? monthsToWeeks(d) : Math.max(1, Math.round(d));
+      first = friday(start);
+    } else {
+      total = activeCalc(j).balance; const m = parseFloat(j.months); const asof = parseDate(j.asof);
+      if(!(total>0) || !(m>0) || !asof) return null;
+      n = monthsToWeeks(m);
+      first = friday(addDays(asof,1));
+    }
+    const amts = split(total, n);
+    const bills = amts.map((a,i)=>({date:addDays(first,7*i), amt:a}));
+    return {bills, total, n, per:amts[0], first, last:bills[n-1].date};
+  }
+
+  // Period indexing
+  const P = {
+    week:   { idx:d=>dayNum(friday(d)), step:7, short:i=>fmtShort(fromDayNum(i)), long:i=>'Week ending '+fmtDate(fromDayNum(i)), head:i=>fmtShort(fromDayNum(i)), minSlot:18 },
+    month:  { idx:d=>d.getFullYear()*12+d.getMonth(), step:1, short:i=>MON[i%12], long:i=>MON[i%12]+' '+Math.floor(i/12), head:i=>MON[i%12]+' '+String(Math.floor(i/12)).slice(2), minSlot:34 },
+    quarter:{ idx:d=>d.getFullYear()*4+Math.floor(d.getMonth()/3), step:1, short:i=>'Q'+(i%4+1)+' '+String(Math.floor(i/4)).slice(2), long:i=>'Q'+(i%4+1)+' '+Math.floor(i/4), head:i=>'Q'+(i%4+1)+' '+Math.floor(i/4), minSlot:48 },
+    year:   { idx:d=>d.getFullYear(), step:1, short:i=>String(i), long:i=>String(i), head:i=>String(i), minSlot:60 },
+  };
+
+  const isOff = j => j.status==='design' && j.included===false;
+
+  function aggregate(){
+    const p = P[S.period];
+    const all = S.jobs.map(j=>({j, s:schedule(j)})).filter(x=>x.s && (S.showDesign || x.j.status!=='design'));
+    const jobs = all.filter(x=>!isOff(x.j)), excluded = all.filter(x=>isOff(x.j));
+    const cells = new Map(); // periodIdx -> {active, design, byJob: Map(id->amt)}
+    let lo = Infinity, hi = -Infinity;
+    jobs.forEach(({j,s})=>{
+      s.bills.forEach(b=>{
+        const k = p.idx(b.date); lo = Math.min(lo,k); hi = Math.max(hi,k);
+        if(!cells.has(k)) cells.set(k,{active:0,design:0,byJob:new Map()});
+        const c = cells.get(k);
+        c[j.status==='design'?'design':'active'] += b.amt;
+        c.byJob.set(j.id, (c.byJob.get(j.id)||0) + b.amt);
+      });
+    });
+    const periods = [];
+    if(isFinite(lo)) for(let k=lo;k<=hi;k+=p.step) periods.push(k);
+    return {jobs, excluded, cells, periods, now:p.idx(new Date())};
+  }
+
+  // ---------- rendering ----------
+  function renderList(){
+    const groups = [['active','Active'],['design','In design']];
+    let h = '';
+    if(!S.jobs.length){
+      h = `<p class="empty">${S.storage==='loading' ? 'Loading jobs…' : 'No jobs yet. Add one to start the forecast.'}</p>`;
+    }
+    groups.forEach(([st,label])=>{
+      const list = S.jobs.filter(j=>(j.status==='design'?'design':'active')===st).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+      if(!list.length) return;
+      const sum = list.reduce((t,j)=>{ const s=schedule(j); return t+(s?s.total:0); },0);
+      h += `<div class="group-h"><span><span class="mk ${st==='design'?'d':'a'}"></span>${label}</span><span>${money0(sum)}</span></div><ul class="joblist">`;
+      list.forEach(j=>{
+        const s = schedule(j);
+        const meta = s ? `${money0(s.per)}/wk to ${fmtShort(s.last)} ${s.last.getFullYear()}${isOff(j)?' (off)':''}` : (j.status!=='design' && activeCalc(j).hasContract && activeCalc(j).balance<=0 ? 'Fully billed' : 'Missing details');
+        h += `<li><button type="button" data-id="${esc(j.id)}" aria-current="${S.sel===j.id}"><span class="jn">${esc(j.name||'Untitled job')}</span><span class="jm">${meta}</span></button></li>`;
+      });
+      h += `</ul>`;
+    });
+    $('jobList').innerHTML = h;
+    $('jobList').querySelectorAll('button[data-id]').forEach(b=>b.addEventListener('click',()=>openEditor(b.dataset.id)));
+  }
+
+  function renderSummary(ag){
+    if(!ag.jobs.length){ $('summary').textContent = S.storage==='loading' ? '' : ag.excluded.length ? 'Every job is turned off. Switch one on in the table below to see the forecast.' : 'Add jobs on the left to build the forecast.'; return; }
+    const wk = P.week, nowW = wk.idx(new Date());
+    let tot=0, des=0;
+    ag.jobs.forEach(({j,s})=>s.bills.forEach(b=>{ const k=wk.idx(b.date); if(k>=nowW && k<nowW+13*7){ tot+=b.amt; if(j.status==='design') des+=b.amt; }}));
+    const allTot = ag.jobs.reduce((t,x)=>t+x.s.total,0);
+    let t = `Over the next 13 weeks you're on track to bill <b>${money0(tot)}</b>, about <b>${money0(tot/13)}</b> a week.`;
+    if(S.showDesign && des>0) t += ` <span class="mk d"></span><b>${money0(des)}</b> of that depends on jobs in design moving into production.`;
+    t += ` ${ag.jobs.length} job${ag.jobs.length===1?'':'s'}, ${money0(allTot)} left to bill in total.`;
+    if(ag.excluded.length) t += ` ${ag.excluded.length} job${ag.excluded.length===1?'':'s'} in design turned off.`;
+    $('summary').innerHTML = t;
+  }
+
+  function niceCeil(v){
+    if(v<=0) return 1;
+    const p = Math.pow(10, Math.floor(Math.log10(v)));
+    for(const m of [1,1.2,1.5,2,2.5,3,4,5,6,8,10]) if(m*p >= v) return m*p;
+    return 10*p;
+  }
+
+  function renderChart(ag){
+    const el = $('chart');
+    if(!ag.periods.length){ el.innerHTML = ''; el.hidden = true; return; }
+    el.hidden = false;
+    const p = P[S.period], n = ag.periods.length;
+    const L = 64, R = 16, T = 16, B = 34, H = 300;
+    const W = Math.max(el.clientWidth - 8, L + R + n*p.minSlot);
+    const iw = W-L-R, ih = H-T-B;
+    const max = niceCeil(Math.max(...ag.periods.map(k=>{ const c=ag.cells.get(k); return c ? c.active+c.design : 0; })));
+    const y = v => T + ih - (v/max)*ih;
+    const slot = iw/n, bw = Math.max(4, Math.min(52, slot*0.7));
+    const names = new Map(S.jobs.map(j=>[j.id, j.name||'Untitled job']));
+    let s = `<svg width="${W}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Billing by ${S.period}, active and in-design jobs stacked">`;
+    for(let i=0;i<=4;i++){
+      const v = max*i/4, yy = y(v);
+      s += `<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="var(--rule)"/><text x="${L-8}" y="${yy+4}" text-anchor="end">${moneyK(v)}</text>`;
+    }
+    const step = Math.max(1, Math.ceil(n / (iw/60)));
+    ag.periods.forEach((k,i)=>{
+      const c = ag.cells.get(k), cx = L + slot*i + slot/2;
+      if(k===ag.now) s += `<rect x="${L+slot*i}" y="${T}" width="${slot}" height="${ih}" fill="var(--now)"/>`;
+      if(c){
+        const tip = esc(p.long(k)+': '+money(Math.round((c.active+c.design)*100)/100) + [...c.byJob].map(([id,a])=>'\n  '+(names.get(id))+'  '+money(Math.round(a*100)/100)).join(''));
+        const ya = y(c.active), yd = y(c.active+c.design);
+        s += `<g><title>${tip}</title>`;
+        if(c.active>0) s += `<rect x="${cx-bw/2}" y="${ya}" width="${bw}" height="${T+ih-ya}" fill="var(--active)"/>`;
+        if(c.design>0) s += `<rect x="${cx-bw/2}" y="${yd}" width="${bw}" height="${ya-yd}" fill="var(--design)"/>`;
+        s += `</g>`;
+      }
+      if(i % step === 0) s += `<text x="${cx}" y="${H-B+18}" text-anchor="middle">${esc(p.short(k))}</text>`;
+    });
+    s += `<line x1="${L}" x2="${W-R}" y1="${T+ih}" y2="${T+ih}" stroke="var(--ink)"/></svg>`;
+    el.innerHTML = s;
+  }
+
+  function renderTable(ag){
+    const tw = $('tableWrap');
+    if(!ag.periods.length && !ag.excluded.length){ tw.hidden = true; return; }
+    tw.hidden = false;
+    const p = P[S.period];
+    const cell = (v,k,cls='') => `<td class="${cls}${k===ag.now?' now':''}">${v>0.004 ? money0(v) : '<span class="zero">–</span>'}</td>`;
+    let h = `<thead><tr><th>Job</th>${ag.periods.map(k=>`<th class="${k===ag.now?'now':''}" title="${esc(p.long(k))}">${esc(p.head(k))}</th>`).join('')}<th class="tot">Total</th></tr></thead><tbody>`;
+    [['active','Active','a'],['design','In design','d']].forEach(([st,label,mk])=>{
+      const byName = (a,b)=>String(a.j.name).localeCompare(String(b.j.name));
+      const list = ag.jobs.filter(x=>(x.j.status==='design'?'design':'active')===st).sort(byName);
+      const offList = st==='design' ? ag.excluded.slice().sort(byName) : [];
+      if(!list.length && !offList.length) return;
+      const sw = (j,on) => st==='design' ? `<button type="button" class="sw" role="switch" aria-checked="${on}" data-toggle="${esc(j.id)}" aria-label="Include ${esc(j.name||'job')} in the forecast"></button>` : '';
+      const sub = ag.periods.map(k=>{ const c=ag.cells.get(k); return c ? c[st] : 0; });
+      h += `<tr class="sub"><td><span class="mk ${mk}"></span>${label}</td>${sub.map((v,i)=>cell(v,ag.periods[i])).join('')}<td class="tot">${money0(sub.reduce((a,b)=>a+b,0))}</td></tr>`;
+      list.forEach(({j,s})=>{
+        h += `<tr><td class="job" title="${esc(j.name||'')}">${sw(j,true)}${esc(j.name||'Untitled job')}</td>${ag.periods.map(k=>{ const c=ag.cells.get(k); return cell(c ? (c.byJob.get(j.id)||0) : 0, k); }).join('')}<td class="tot">${money0(s.total)}</td></tr>`;
+      });
+      offList.forEach(({j,s})=>{
+        h += `<tr class="off"><td class="job" title="${esc(j.name||'')} (turned off)">${sw(j,false)}${esc(j.name||'Untitled job')}</td>${ag.periods.map(k=>cell(0,k)).join('')}<td class="tot">${money0(s.total)}</td></tr>`;
+      });
+    });
+    const grand = ag.periods.map(k=>{ const c=ag.cells.get(k); return c ? c.active+c.design : 0; });
+    h += `</tbody><tfoot><tr class="grand"><td>Total billing</td>${grand.map((v,i)=>cell(v,ag.periods[i])).join('')}<td class="tot">${money0(grand.reduce((a,b)=>a+b,0))}</td></tr></tfoot>`;
+    $('table').innerHTML = h;
+    // scroll the current period into view once per period change
+    const nowTh = $('table').querySelector('th.now');
+    if(nowTh && S._scrolledFor !== S.tab+S.period){ S._scrolledFor = S.tab+S.period; tw.scrollLeft = Math.max(0, nowTh.offsetLeft - 240); }
+  }
+
+  // ---------- supervisors ----------
+  const superKey = j => String(j.supervisor||'').trim();
+  function supervisorNames(){
+    const seen = new Map();
+    S.jobs.forEach(j=>{ const n = superKey(j); if(n && !seen.has(n.toLowerCase())) seen.set(n.toLowerCase(), n); });
+    return [...seen.values()].sort((a,b)=>a.localeCompare(b));
+  }
+  function superGroups(ag){
+    const g = new Map();
+    ag.jobs.forEach(x=>{ const k = superKey(x.j).toLowerCase(); if(!g.has(k)) g.set(k,{name:superKey(x.j)||'Unassigned', list:[]}); g.get(k).list.push(x); });
+    return [...g.entries()].sort((a,b)=> a[0]==='' ? 1 : b[0]==='' ? -1 : a[1].name.localeCompare(b[1].name)).map(e=>e[1]);
+  }
+  const runningIn = (ag,k,id) => { const c = ag.cells.get(k); return !!(c && c.byJob.has(id)); };
+
+  function renderSupersSummary(ag){
+    if(!ag.jobs.length){ $('summary').textContent = S.storage==='loading' ? '' : 'Add jobs on the left and assign a supervisor to each.'; return; }
+    const wk = P.week.idx(new Date());
+    const groups = superGroups(ag);
+    const named = groups.filter(g=>g.name!=='Unassigned');
+    const counts = named.map(g=>({name:g.name, n:g.list.filter(x=>x.s.bills.some(b=>P.week.idx(b.date)===wk)).length})).filter(c=>c.n>0).sort((a,b)=>b.n-a.n);
+    let t = '';
+    if(counts.length) t += 'This week: ' + counts.map(c=>`<b>${esc(c.name)}</b> ${c.n} job${c.n===1?'':'s'}`).join(', ') + '.';
+    else if(named.length) t += 'None of your supervisors have jobs billing this week.';
+    const un = groups.find(g=>g.name==='Unassigned');
+    if(un) t += ` ${un.list.length} job${un.list.length===1?' has':'s have'} no supervisor yet.`;
+    $('summary').innerHTML = t.trim();
+  }
+
+  function renderSupers(ag){
+    const tw = $('tableWrap');
+    if(!ag.jobs.length || !ag.periods.length){ tw.hidden = true; return; }
+    tw.hidden = false;
+    const p = P[S.period];
+    const nowc = k => k===ag.now ? ' now' : '';
+    let h = `<thead><tr><th>Supervisor and jobs</th>${ag.periods.map(k=>`<th class="${nowc(k)}" title="${esc(p.long(k))}">${esc(p.head(k))}</th>`).join('')}<th class="tot">Left to bill</th></tr></thead><tbody>`;
+    superGroups(ag).forEach(g=>{
+      g.list.sort((a,b)=>a.s.first-b.s.first);
+      const total = g.list.reduce((t,x)=>t+x.s.total,0);
+      h += `<tr class="sub"><td title="${esc(g.name)}">${esc(g.name)} <span class="cnt">${g.list.length} job${g.list.length===1?'':'s'}</span></td>`;
+      const lv = {};
+      h += ag.periods.map(k=>{
+        const run = g.list.filter(x=>runningIn(ag,k,x.j.id));
+        lv[k] = run.length>=3 ? 'lv3' : run.length===2 ? 'lv2' : 'lv1';
+        return run.length ? `<td class="heat${nowc(k)}" title="${esc(p.long(k)+': '+run.map(x=>x.j.name).join(', '))}">${run.length}</td>` : `<td class="${nowc(k)}"><span class="zero">–</span></td>`;
+      }).join('');
+      h += `<td class="tot">${money0(total)}</td></tr>`;
+      g.list.forEach(({j,s},i)=>{
+        h += `<tr${i===g.list.length-1?' class="grp-end"':''}><td class="job" title="${esc(j.name||'')}${j.status==='design'?' (in design)':''}"><span class="mk ${j.status==='design'?'dsg':'a'}"></span>${esc(j.name||'Untitled job')}</td>`;
+        h += ag.periods.map(k=>{
+          const c = ag.cells.get(k), amt = c && c.byJob.get(j.id);
+          return amt ? `<td class="b${nowc(k)}" title="${esc(p.long(k)+': '+money(Math.round(amt*100)/100))}"><span class="bar ${lv[k]}"></span></td>` : `<td class="b${nowc(k)}"></td>`;
+        }).join('');
+        h += `<td class="tot">${money0(s.total)}</td></tr>`;
+      });
+    });
+    h += `</tbody>`;
+    $('table').innerHTML = h;
+    const nowTh = $('table').querySelector('th.now');
+    const key = S.tab+S.period;
+    if(nowTh && S._scrolledFor !== key){ S._scrolledFor = key; tw.scrollLeft = Math.max(0, nowTh.offsetLeft - 240); }
+  }
+
+  // ---------- master schedule ----------
+  const DEFAULT_STEPS = [
+    {name:'Design kickoff & field measure', dept:'Design', dur:2, unit:'days'},
+    {name:'Conceptual design', dept:'Design', dur:5, unit:'weeks'},
+    {name:'Budget', dept:'Estimating', dur:2, unit:'weeks'},
+    {name:'Schematic design', dept:'Design', dur:6, unit:'weeks'},
+    {name:'Selections', dept:'Selections & SKs', dur:6, unit:'weeks', withPrev:true},
+    {name:'CDs', dept:'Design', dur:4, unit:'weeks'},
+    {name:'SKs', dept:'Selections & SKs', dur:4, unit:'weeks', withPrev:true},
+    {name:'Estimating', dept:'Estimating', dur:4, unit:'weeks'},
+    {name:'Contract presentation', dept:'Sales & contracts', dur:1, unit:'days'},
+    {name:'Client review', dept:'Sales & contracts', dur:2, unit:'weeks'},
+    {name:'Contract revisions', dept:'Sales & contracts', dur:1, unit:'weeks'},
+    {name:'Signed contract', dept:'Sales & contracts', dur:2, unit:'days'},
+    {name:'Permitting', dept:'Pre-construction', dur:4, unit:'weeks'},
+    {name:'Pre-production', dept:'Pre-construction', dur:4, unit:'weeks', withPrev:true},
+  ];
+  const PROD = 'Production';
+  const steps = () => (S.template && S.template.length ? S.template : DEFAULT_STEPS);
+  const stepDays = st => Math.max(1, Math.round((parseFloat(st.dur)||1) * (st.unit==='weeks' ? 7 : 1)));
+  function deptOrder(){
+    const out = [];
+    steps().forEach(st=>{ const d = (st.dept||'Other').trim() || 'Other'; if(!out.includes(d)) out.push(d); });
+    if(!out.includes(PROD)) out.push(PROD);
+    return out;
+  }
+  const deptClass = d => 'dp' + (deptOrder().indexOf(d) % 6);
+
+  // All scheduled steps for one job, as day numbers [s, e) (e exclusive)
+  function jobPlan(j, useOverrides=true){
+    const out = [];
+    if(j.status==='design'){
+      const start = parseDate(j.start), d = parseFloat(j.duration);
+      if(!start || !(d>0)) return null;
+      const prod = dayNum(start);
+      let cursor = 0, prevStart = 0; const rel = [];
+      steps().forEach((st,i)=>{
+        const s0 = (st.withPrev && i>0) ? prevStart : cursor, len = stepDays(st);
+        rel.push({name:st.name, dept:(st.dept||'Other').trim()||'Other', s:s0, e:s0+len});
+        prevStart = s0; cursor = Math.max(cursor, s0+len);
+      });
+      const offset = prod - cursor;
+      const ov = useOverrides && j.stepDates && typeof j.stepDates==='object' ? j.stepDates : null;
+      rel.forEach(r=>{
+        let s0 = r.s+offset, e0 = r.e+offset, adj = false;
+        const o = ov && ov[r.name];
+        if(o){ const a = parseDate(o.start), b = parseDate(o.end); if(a && b && dayNum(b) >= dayNum(a)){ s0 = dayNum(a); e0 = dayNum(b)+1; adj = true; } }
+        out.push({name:r.name, dept:r.dept, s:s0, e:e0, adj});
+      });
+      const n = j.durUnit==='months' ? monthsToWeeks(d) : Math.max(1, Math.round(d));
+      out.push({name:'Construction', dept:PROD, s:prod, e:prod+n*7});
+    } else {
+      const asof = parseDate(j.asof), m = parseFloat(j.months);
+      if(!asof || !(m>0)) return null;
+      const a0 = dayNum(asof), cs = parseDate(j.conStart);
+      const s0 = cs && dayNum(cs) < a0 ? dayNum(cs) : a0;
+      out.push({name:'Construction', dept:PROD, s:s0, e:a0+monthsToWeeks(m)*7});
+    }
+    return out;
+  }
+  // ---------- construction types and materials ----------
+  const ITEM_NAMES = ['Windows','Wood exterior doors','Interior doors','NanaWall','Architectural columns','Cedar brackets','Shutters','Tile & stone','Plumbing roughs','Electrical fixtures','Plumbing trims','Cabinets','Hardware','Countertops','Wallpaper'];
+  // early: extra weeks the item should be on site before its phase starts
+  const DEFAULT_CATALOG = ITEM_NAMES.map(n=>({name:n, leadMin:6, leadMax:6, early: n==='Cabinets' ? 3 : 0, owner:'@super'}));
+  // Starter construction types. Phases are percent of construction length; items map to the phase they're needed at.
+  const DEFAULT_CTYPES = [{"id": "kitchen", "name": "Kitchen remodel", "months": 4, "phases": [{"name": "Demo", "start": 0.0, "end": 8.8}, {"name": "Rough framing", "start": 5.9, "end": 17.6}, {"name": "Rough mechanicals", "start": 14.7, "end": 29.4}, {"name": "Insulation & drywall", "start": 29.4, "end": 41.2}, {"name": "Interior doors & trim", "start": 41.2, "end": 50.0}, {"name": "Cabinets & millwork", "start": 44.1, "end": 55.9}, {"name": "Countertops", "start": 55.9, "end": 67.6}, {"name": "Tile", "start": 64.7, "end": 76.5}, {"name": "Paint & wallpaper", "start": 73.5, "end": 85.3}, {"name": "Final fixtures & hardware", "start": 82.4, "end": 91.2}, {"name": "Punch list", "start": 91.2, "end": 100.0}], "items": {"Plumbing roughs": "Rough mechanicals", "Interior doors": "Interior doors & trim", "Cabinets": "Cabinets & millwork", "Countertops": "Countertops", "Tile & stone": "Tile", "Wallpaper": "Paint & wallpaper", "Electrical fixtures": "Final fixtures & hardware", "Plumbing trims": "Final fixtures & hardware", "Hardware": "Final fixtures & hardware", "Windows": "Rough framing", "Wood exterior doors": "Rough framing", "NanaWall": "Rough framing"}}, {"id": "kitchenadd", "name": "Kitchen remodel with small addition", "months": 5.5, "phases": [{"name": "Site work & foundation", "start": 0.0, "end": 14.6}, {"name": "Framing", "start": 14.6, "end": 27.1}, {"name": "Demo", "start": 20.8, "end": 27.1}, {"name": "Roofing", "start": 25.0, "end": 31.2}, {"name": "Windows & exterior doors", "start": 27.1, "end": 33.3}, {"name": "Rough mechanicals", "start": 31.2, "end": 45.8}, {"name": "Exterior trim & siding", "start": 33.3, "end": 50.0}, {"name": "Insulation & drywall", "start": 45.8, "end": 56.2}, {"name": "Interior doors & trim", "start": 56.2, "end": 64.6}, {"name": "Cabinets & millwork", "start": 58.3, "end": 68.8}, {"name": "Countertops", "start": 68.8, "end": 77.1}, {"name": "Tile", "start": 75.0, "end": 83.3}, {"name": "Paint & wallpaper", "start": 81.2, "end": 89.6}, {"name": "Final fixtures & hardware", "start": 87.5, "end": 93.8}, {"name": "Punch list", "start": 93.8, "end": 100.0}], "items": {"Windows": "Windows & exterior doors", "Wood exterior doors": "Windows & exterior doors", "NanaWall": "Windows & exterior doors", "Cedar brackets": "Exterior trim & siding", "Shutters": "Exterior trim & siding", "Architectural columns": "Exterior trim & siding", "Plumbing roughs": "Rough mechanicals", "Interior doors": "Interior doors & trim", "Cabinets": "Cabinets & millwork", "Countertops": "Countertops", "Tile & stone": "Tile", "Wallpaper": "Paint & wallpaper", "Electrical fixtures": "Final fixtures & hardware", "Plumbing trims": "Final fixtures & hardware", "Hardware": "Final fixtures & hardware"}}, {"id": "medadd", "name": "Medium addition", "months": 7, "phases": [{"name": "Site work & foundation", "start": 0.0, "end": 16.7}, {"name": "Framing", "start": 16.7, "end": 33.3}, {"name": "Roofing", "start": 30.0, "end": 36.7}, {"name": "Windows & exterior doors", "start": 33.3, "end": 40.0}, {"name": "Rough mechanicals", "start": 38.3, "end": 51.7}, {"name": "Exterior trim & siding", "start": 40.0, "end": 60.0}, {"name": "Insulation & drywall", "start": 51.7, "end": 61.7}, {"name": "Interior doors & trim", "start": 61.7, "end": 70.0}, {"name": "Cabinets & millwork", "start": 65.0, "end": 73.3}, {"name": "Countertops", "start": 73.3, "end": 80.0}, {"name": "Tile", "start": 76.7, "end": 85.0}, {"name": "Paint & wallpaper", "start": 83.3, "end": 90.0}, {"name": "Final fixtures & hardware", "start": 88.3, "end": 95.0}, {"name": "Punch list", "start": 95.0, "end": 100.0}], "items": {"Windows": "Windows & exterior doors", "Wood exterior doors": "Windows & exterior doors", "NanaWall": "Windows & exterior doors", "Cedar brackets": "Exterior trim & siding", "Shutters": "Exterior trim & siding", "Architectural columns": "Exterior trim & siding", "Plumbing roughs": "Rough mechanicals", "Interior doors": "Interior doors & trim", "Cabinets": "Cabinets & millwork", "Countertops": "Countertops", "Tile & stone": "Tile", "Wallpaper": "Paint & wallpaper", "Electrical fixtures": "Final fixtures & hardware", "Plumbing trims": "Final fixtures & hardware", "Hardware": "Final fixtures & hardware"}}, {"id": "largeint", "name": "Large interior, no addition", "months": 6.5, "phases": [{"name": "Demo", "start": 0.0, "end": 8.9}, {"name": "Rough framing", "start": 7.1, "end": 21.4}, {"name": "Windows & exterior doors", "start": 17.9, "end": 25.0}, {"name": "Rough mechanicals", "start": 19.6, "end": 37.5}, {"name": "Insulation & drywall", "start": 37.5, "end": 50.0}, {"name": "Interior doors & trim", "start": 50.0, "end": 60.7}, {"name": "Cabinets & millwork", "start": 53.6, "end": 66.1}, {"name": "Countertops", "start": 66.1, "end": 73.2}, {"name": "Tile", "start": 69.6, "end": 80.4}, {"name": "Paint & wallpaper", "start": 78.6, "end": 89.3}, {"name": "Final fixtures & hardware", "start": 87.5, "end": 94.6}, {"name": "Punch list", "start": 94.6, "end": 100.0}], "items": {"Plumbing roughs": "Rough mechanicals", "Interior doors": "Interior doors & trim", "Cabinets": "Cabinets & millwork", "Countertops": "Countertops", "Tile & stone": "Tile", "Wallpaper": "Paint & wallpaper", "Electrical fixtures": "Final fixtures & hardware", "Plumbing trims": "Final fixtures & hardware", "Hardware": "Final fixtures & hardware", "Windows": "Windows & exterior doors", "Wood exterior doors": "Windows & exterior doors", "NanaWall": "Windows & exterior doors", "Architectural columns": "Interior doors & trim"}}, {"id": "largeadd", "name": "Large addition", "months": 9, "phases": [{"name": "Site work & foundation", "start": 0.0, "end": 15.4}, {"name": "Framing", "start": 15.4, "end": 33.3}, {"name": "Roofing", "start": 30.8, "end": 38.5}, {"name": "Windows & exterior doors", "start": 33.3, "end": 41.0}, {"name": "Rough mechanicals", "start": 38.5, "end": 51.3}, {"name": "Exterior trim & siding", "start": 41.0, "end": 61.5}, {"name": "Insulation & drywall", "start": 51.3, "end": 61.5}, {"name": "Interior doors & trim", "start": 61.5, "end": 70.5}, {"name": "Cabinets & millwork", "start": 65.4, "end": 74.4}, {"name": "Countertops", "start": 74.4, "end": 79.5}, {"name": "Tile", "start": 76.9, "end": 84.6}, {"name": "Paint & wallpaper", "start": 83.3, "end": 91.0}, {"name": "Final fixtures & hardware", "start": 89.7, "end": 94.9}, {"name": "Punch list", "start": 94.9, "end": 100.0}], "items": {"Windows": "Windows & exterior doors", "Wood exterior doors": "Windows & exterior doors", "NanaWall": "Windows & exterior doors", "Cedar brackets": "Exterior trim & siding", "Shutters": "Exterior trim & siding", "Architectural columns": "Exterior trim & siding", "Plumbing roughs": "Rough mechanicals", "Interior doors": "Interior doors & trim", "Cabinets": "Cabinets & millwork", "Countertops": "Countertops", "Tile & stone": "Tile", "Wallpaper": "Paint & wallpaper", "Electrical fixtures": "Final fixtures & hardware", "Plumbing trims": "Final fixtures & hardware", "Hardware": "Final fixtures & hardware"}}, {"id": "newhouse", "name": "New house", "months": 12, "phases": [{"name": "Site work", "start": 0.0, "end": 9.6}, {"name": "Foundation", "start": 7.7, "end": 17.3}, {"name": "Framing", "start": 17.3, "end": 34.6}, {"name": "Roofing", "start": 30.8, "end": 38.5}, {"name": "Windows & exterior doors", "start": 32.7, "end": 40.4}, {"name": "Rough mechanicals", "start": 38.5, "end": 51.9}, {"name": "Exterior trim & siding", "start": 40.4, "end": 61.5}, {"name": "Insulation & drywall", "start": 51.9, "end": 61.5}, {"name": "Interior doors & trim", "start": 61.5, "end": 71.2}, {"name": "Cabinets & millwork", "start": 65.4, "end": 75.0}, {"name": "Countertops", "start": 75.0, "end": 79.8}, {"name": "Tile", "start": 76.9, "end": 84.6}, {"name": "Paint & wallpaper", "start": 83.7, "end": 91.3}, {"name": "Final fixtures & hardware", "start": 90.4, "end": 95.2}, {"name": "Punch list", "start": 95.2, "end": 100.0}], "items": {"Windows": "Windows & exterior doors", "Wood exterior doors": "Windows & exterior doors", "NanaWall": "Windows & exterior doors", "Cedar brackets": "Exterior trim & siding", "Shutters": "Exterior trim & siding", "Architectural columns": "Exterior trim & siding", "Plumbing roughs": "Rough mechanicals", "Interior doors": "Interior doors & trim", "Cabinets": "Cabinets & millwork", "Countertops": "Countertops", "Tile & stone": "Tile", "Wallpaper": "Paint & wallpaper", "Electrical fixtures": "Final fixtures & hardware", "Plumbing trims": "Final fixtures & hardware", "Hardware": "Final fixtures & hardware"}}];
+  const ctypes = () => (S.ctypes && S.ctypes.length ? S.ctypes : DEFAULT_CTYPES);
+  const catalog = () => (S.catalog && S.catalog.length ? S.catalog : DEFAULT_CATALOG);
+  const bufferW = () => (S.bufferW!=null && isFinite(S.bufferW) ? S.bufferW : 1);
+  const ctypeOf = j => ctypes().find(t=>t.id===j.ctype) || null;
+  const STATUS = {none:'Not selected', selected:'Selected', ordered:'Ordered', delivered:'Delivered', skip:'Not needed'};
+  // deadlines (like permits) use the same five states with task wording
+  const TASK_STATUS = {none:'Not started', selected:'In progress', ordered:'Submitted', delivered:'Approved', skip:'Not needed'};
+  const statusSet = x => x.kind==='task' ? TASK_STATUS : STATUS;
+
+  // Construction phases for a job, scaled to its construction span
+  function phasesFor(j){
+    const t = ctypeOf(j), plan = jobPlan(j); if(!t || !plan) return [];
+    const con = plan.find(r=>r.dept===PROD); if(!con) return [];
+    const len = con.e - con.s;
+    return t.phases.map(x=>{ const s0 = con.s + Math.round(len*x.start/100), e0 = Math.max(s0+1, con.s + Math.round(len*x.end/100)); return {name:x.name, s:s0, e:e0}; });
+  }
+  // Materials for a job: date needed on site, lead time in use, order-by date and any warnings
+  function materialsFor(j){
+    const t = ctypeOf(j); if(!t) return [];
+    const phases = phasesFor(j), plan = jobPlan(j) || [], today = dayNum(new Date());
+    const sel = plan.find(r=>/selection/i.test(r.name));
+    const con = plan.find(r=>r.dept===PROD);
+    const mats = j.materials && typeof j.materials==='object' ? j.materials : {};
+    return catalog().filter(c=>t.items[c.name]).map(c=>{
+      const m0 = mats[c.name] || {}, st0 = STATUS[m0.status] ? m0.status : 'none';
+      if(c.kind==='task'){
+        // a deadline a set number of weeks before construction starts; no lead-time math or buffer
+        // a job can set its own weeks (a slower town), otherwise the company default applies
+        const def = Math.max(0, parseFloat(c.leadMax)||0), own = parseFloat(m0.lead) > 0 ? parseFloat(m0.lead) : null;
+        const wk = own ?? def, need = con ? con.s : null, due = need==null ? null : need - Math.round(wk*7);
+        const flags = (st0==='none' || st0==='selected') && due!=null && due < today ? ['Past due'] : [];
+        return {kind:'task', name:c.name, phase:'Construction start', need, lead:wk, lMin:def, lMax:def, chosen:own, status:st0, orderBy:due, ordered:'', promised:'', flags};
+      }
+      const phase = t.items[c.name]==='@start' ? null : phases.find(x=>x.name===t.items[c.name]);
+      const early = Math.max(0, parseFloat(c.early)||0);
+      const need0 = phase ? phase.s : (con ? con.s : null);
+      const need = need0==null ? null : need0 - Math.round(early*7);
+      const m = mats[c.name] || {}, status = STATUS[m.status] ? m.status : 'none';
+      const lMin = parseFloat(c.leadMin)||0, lMax = Math.max(lMin, parseFloat(c.leadMax)||0);
+      const chosen = parseFloat(m.lead) > 0 ? parseFloat(m.lead) : null;
+      const lead = (status!=='none' && chosen) ? chosen : lMax;
+      const orderBy = need==null ? null : need - Math.round((lead + bufferW())*7);
+      const promised = parseDate(m.promised) ? dayNum(parseDate(m.promised)) : null;
+      const flags = [];
+      if((status==='none' || status==='selected') && orderBy!=null && orderBy < today) flags.push('Past order-by date');
+      if(status==='ordered' && promised!=null && need!=null && promised > need) flags.push('Arrives after it’s needed');
+      if(status==='none' && sel && orderBy!=null && sel.e-1 > orderBy) flags.push('Selections finish too late');
+      return {name:c.name, phase: (phase ? phase.name : 'Construction start') + (early ? `, ${early} wk early` : ''), need, lead, lMin, lMax, chosen, status, orderBy, ordered:m.ordered||'', promised:m.promised||'', flags};
+    });
+  }
+
+  function periodBounds(k, P0=S.period){
+    if(P0==='week') return [k-6, k];
+    if(P0==='month'){ const y=Math.floor(k/12), m=k%12; return [dayNum(new Date(y,m,1)), dayNum(new Date(y,m+1,0))]; }
+    if(P0==='quarter'){ const y=Math.floor(k/4), q=k%4; return [dayNum(new Date(y,q*3,1)), dayNum(new Date(y,q*3+3,0))]; }
+    return [dayNum(new Date(k,0,1)), dayNum(new Date(k,11,31))];
+  }
+  const overlaps = (r,k,per) => { const [a,b] = periodBounds(k,per); return r.s <= b && r.e-1 >= a; };
+
+  function schedData(per=S.period){
+    const jobs = S.jobs.filter(j=>!isOff(j) && (S.showDesign || j.status!=='design'))
+      .map(j=> (S.drag && S.drag.preview && S.drag.id===j.id) ? S.drag.preview : j)
+      .map(j=>({j, plan:jobPlan(j)})).filter(x=>x.plan);
+    const p = P[per];
+    let lo=Infinity, hi=-Infinity;
+    jobs.forEach(x=>x.plan.forEach(r=>{ lo=Math.min(lo, p.idx(fromDayNum(r.s))); hi=Math.max(hi, p.idx(fromDayNum(r.e-1))); }));
+    const periods = []; if(isFinite(lo)) for(let k=lo;k<=hi;k+=p.step) periods.push(k);
+    return {jobs, periods, now:p.idx(new Date())};
+  }
+  const rangeTxt = (s,e) => { const a=fromDayNum(s), b=fromDayNum(e-1); return a.getTime()===b.getTime() ? fmtDate(a) : `${fmtShort(a)} to ${fmtDate(b)}`; };
+
+  function renderSchedule(){
+    const depts = deptOrder();
+    $('legDept').innerHTML = depts.map(d=>`<span><span class="mk ${deptClass(d)}"></span>${esc(d)}</span>`).join('');
+    if(S.deptView!=='all' && !depts.includes(S.deptView)) S.deptView = depts[0];
+    $('deptPick').innerHTML = depts.map(d=>`<option value="${esc(d)}"${d===S.deptView?' selected':''}>${esc(d)}</option>`).join('') + `<option value="all"${S.deptView==='all'?' selected':''}>All departments</option>`;
+    const board = S.sview==='board';
+    const sd = schedData(board ? 'week' : S.period), tw = $('tableWrap'), p = P[S.period];
+    tw.classList.toggle('tall', board);
+    // summary: what each department is working on this week
+    const today = dayNum(new Date());
+    const busy = depts.map(d=>({d, n:new Set(sd.jobs.filter(x=>x.plan.some(r=>r.dept===d && r.s<=today && r.e>today)).map(x=>x.j.id)).size})).filter(x=>x.n);
+    if(!sd.jobs.length){ $('summary').textContent = S.storage==='loading' ? '' : 'Jobs in design need a production start and duration to appear here; active jobs need months remaining.'; tw.hidden = true; return; }
+    $('summary').innerHTML = busy.length ? 'Right now: ' + busy.map(x=>`<b>${esc(x.d)}</b> on ${x.n} job${x.n===1?'':'s'}`).join(', ') + '.' : 'No scheduled work falls on today.';
+    if(!sd.periods.length){ tw.hidden = true; return; }
+    tw.hidden = false;
+    if(board){ renderBoard(sd); return; }
+    const nowc = k => k===sd.now ? ' now' : '';
+    let h = `<thead><tr><th>${S.sview==='job'?'Job and steps':'Department and jobs'}</th>${sd.periods.map(k=>`<th class="${nowc(k)}" title="${esc(p.long(k))}">${esc(p.head(k))}</th>`).join('')}<th class="tot">Dates</th></tr></thead><tbody>`;
+    if(S.sview==='job'){
+      sd.jobs.sort((a,b)=>a.plan[0].s-b.plan[0].s).forEach(({j,plan})=>{
+        const sup = superKey(j);
+        h += `<tr class="sub jobhead"><td title="${esc(j.name||'')}"><span class="mk ${j.status==='design'?'dsg':'a'}"></span>${esc(j.name||'Untitled job')}${sup?` <span class="cnt">${esc(sup)}</span>`:''}</td>${sd.periods.map(k=>`<td class="${nowc(k)}"></td>`).join('')}<td class="tot dates">${rangeTxt(plan[0].s, plan[plan.length-1].e)}</td></tr>`;
+        plan.forEach((r,i)=>{
+          h += `<tr${i===plan.length-1?' class="grp-end"':''}><td class="job" title="${esc(r.name+' ('+r.dept+')')}">${esc(r.name)}</td>`;
+          h += sd.periods.map(k=>overlaps(r,k) ? `<td class="b${nowc(k)}" title="${esc(r.name+': '+rangeTxt(r.s,r.e))}"><span class="bar ${deptClass(r.dept)}"></span></td>` : `<td class="b${nowc(k)}"></td>`).join('');
+          h += `<td class="tot dates">${rangeTxt(r.s,r.e)}</td></tr>`;
+        });
+      });
+    } else {
+      const single = S.deptView && S.deptView!=='all' && depts.includes(S.deptView);
+      if(single){
+        const dSteps = deptSteps(S.deptView);
+        $('legDept').innerHTML = dSteps.map(n=>`<span><span class="mk" style="background:${stepShade({name:n, dept:S.deptView})}"></span>${esc(n)}</span>`).join('');
+      }
+      (single ? [S.deptView] : depts).forEach(d=>{
+        const rows = sd.jobs.map(x=>({j:x.j, parts:x.plan.filter(r=>r.dept===d)})).filter(x=>x.parts.length).sort((a,b)=>a.parts[0].s-b.parts[0].s);
+        if(!rows.length) return;
+        const lv = {};
+        h += `<tr class="sub"><td><span class="mk ${deptClass(d)}"></span>${esc(d)} <span class="cnt">${rows.length} job${rows.length===1?'':'s'}</span></td>`;
+        h += sd.periods.map(k=>{
+          const on = rows.filter(x=>x.parts.some(r=>overlaps(r,k)));
+          lv[k] = on.length>=3 ? 'lv3' : on.length===2 ? 'lv2' : 'lv1';
+          return on.length ? `<td class="heat${nowc(k)}" title="${esc(p.long(k)+': '+on.map(x=>x.j.name).join(', '))}">${on.length}</td>` : `<td class="${nowc(k)}"><span class="zero">–</span></td>`;
+        }).join('');
+        h += `<td class="tot"></td></tr>`;
+        rows.forEach(({j,parts},i)=>{
+          const first = parts[0].s, last = Math.max(...parts.map(r=>r.e));
+          h += `<tr${i===rows.length-1?' class="grp-end"':''}><td class="job" title="${esc(j.name||'')}"><span class="mk ${j.status==='design'?'dsg':'a'}"></span>${esc(j.name||'Untitled job')}</td>`;
+          h += sd.periods.map(k=>{
+            const hit = parts.filter(r=>overlaps(r,k));
+            if(!hit.length) return `<td class="b${nowc(k)}"></td>`;
+            const tip = esc(p.long(k)+': '+hit.map(r=>r.name).join(', '));
+            if(!single) return `<td class="b${nowc(k)}" title="${tip}"><span class="bar ${lv[k]}"></span></td>`;
+            const f = hit.map(stepShade);
+            const bg = f.length===1 ? f[0] : `linear-gradient(180deg,${f.map((c,i)=>`${c} ${i/f.length*100}%,${c} ${(i+1)/f.length*100}%`).join(',')})`;
+            return `<td class="b${nowc(k)}" title="${tip}"><span class="bar tall" style="background:${bg}"></span></td>`;
+          }).join('');
+          h += `<td class="tot dates">${rangeTxt(first,last)}</td></tr>`;
+        });
+      });
+    }
+    h += `</tbody>`;
+    $('table').innerHTML = h;
+    const nowTh = $('table').querySelector('th.now'), key = S.tab+S.sview+S.period;
+    if(nowTh && S._scrolledFor !== key){ S._scrolledFor = key; tw.scrollLeft = Math.max(0, nowTh.offsetLeft - 240); }
+  }
+
+  // Board: jobs across the top, weeks running down, like the spreadsheet schedule
+  // Supervisor accent colors (kept away from the production blue)
+  const SUP_COLORS = ['#E8833A','#C0392B','#E0B400','#8E44AD','#27AE60','#E84393','#16A085','#6D4C41','#D35400','#2C3E50'];
+  const PROD_FILL = '#2F6FC9';
+  const DEPT_TINTS = ['#3E9B4F','#8352C4','#8B5E3C','#1597AE','#C0417A','#6B7B8C'];
+  // Design phases each get a distinct color, in step order
+  const DESIGN_COLORS = ['#F2C230','#F08A24','#D9372B','#2BA3D9','#3E9B4F','#8352C4'];
+  const inkFor = hex => { const [r,g,b] = [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255); return (0.299*r+0.587*g+0.114*b) > 0.6 ? '#1E272D' : '#FFFFFF'; };
+  const mix = (a,b,t) => { const pa=[1,3,5].map(i=>parseInt(a.slice(i,i+2),16)), pb=[1,3,5].map(i=>parseInt(b.slice(i,i+2),16)); return '#'+pa.map((v,i)=>Math.round(v+(pb[i]-v)*t).toString(16).padStart(2,'0')).join(''); };
+  // Design steps get their own shade of green, light to dark in step order; every other department one tint
+  function stepFill(r){
+    if(r.dept===PROD) return PROD_FILL;
+    if(r.dept.toLowerCase()==='design'){
+      const ds = steps().filter(st=>(st.dept||'').trim().toLowerCase()==='design').map(st=>st.name);
+      const i = Math.max(0, ds.indexOf(r.name)), n = ds.length;
+      return DESIGN_COLORS[i % DESIGN_COLORS.length];
+    }
+    return DEPT_TINTS[deptOrder().indexOf(r.dept) % DEPT_TINTS.length];
+  }
+  // Short labels so every board column can stay the same width
+  const SHORT = {'wood exterior doors':'Ext doors', 'design kickoff & field measure':'Kickoff/measure','conceptual design':'Conceptual','schematic design':'Schematic','design development':'Design dev','contract presentation':'Presentation','client review':'Client review','contract revisions':'Revisions','signed contract':'Signed','pre-production':'Pre-prod','pre production':'Pre-prod','permitting':'Permit','estimating':'Estimating','construction':'Construction'};
+  const shortName = n => SHORT[String(n).toLowerCase()] || n;
+  // Steps within one department, in template order, and a shade for each (light to dark)
+  const deptSteps = d => steps().filter(st=>((st.dept||'Other').trim()||'Other')===d).map(st=>st.name);
+  function stepShade(r){
+    if(r.dept===PROD) return PROD_FILL;
+    if(r.dept.toLowerCase()==='design'){
+      // distinct colors for design phases in the single-department view: yellow, orange, red, blue, then extras
+      const DESIGN_PHASES = ['#F2C230','#F08A24','#D63B2F','#2F6FC9','#3E9B4F','#8352C4'];
+      const ds = deptSteps(r.dept), i = Math.max(0, ds.indexOf(r.name));
+      return DESIGN_PHASES[i % DESIGN_PHASES.length];
+    }
+    const base = DEPT_TINTS[deptOrder().indexOf(r.dept) % DEPT_TINTS.length];
+    const ds = deptSteps(r.dept), n = ds.length, i = Math.max(0, ds.indexOf(r.name));
+    return n>1 ? mix(mix(base,'#FFFFFF',0.45), mix(base,'#000000',0.3), i/(n-1)) : base;
+  }
+  function renderBoard(sd){
+    const tw = $('tableWrap'), names = supervisorNames().map(n=>n.toLowerCase());
+    const supColor = j => { const i = names.indexOf(superKey(j).toLowerCase()); return i<0 ? null : SUP_COLORS[i % SUP_COLORS.length]; };
+    // legend: departments (design shown as its run of greens) and supervisor accents
+    const depts = deptOrder();
+    const designSteps = steps().filter(st=>(st.dept||'').trim().toLowerCase()==='design');
+    let leg = depts.map(d=>{
+      if(d.toLowerCase()==='design' && designSteps.length){
+        const g = designSteps.map(st=>stepFill({name:st.name, dept:st.dept.trim()}));
+        return `<span><span class="mk" style="width:2.2em;background:linear-gradient(90deg,${g.join(',')})"></span>${esc(d)}</span>`;
+      }
+      return `<span><span class="mk" style="background:${d===PROD?PROD_FILL:DEPT_TINTS[depts.indexOf(d)%DEPT_TINTS.length]}"></span>${esc(d)}</span>`;
+    }).join('');
+    leg += supervisorNames().map(n=>`<span><span class="mk" style="width:.35em;border-radius:0;background:${SUP_COLORS[names.indexOf(n.toLowerCase())%SUP_COLORS.length]}"></span>${esc(n)}</span>`).join('');
+    $('legDept').innerHTML = leg;
+
+    // column order: by the start of the chosen department (jobs without it go last), else by first step
+    const opts = [['first','First step']].concat(deptOrder().map(d=>[d, d+' start']));
+    if(!opts.some(o=>o[0]===S.boardSort)) S.boardSort = 'first';
+    $('boardSort').innerHTML = opts.map(([v,l])=>`<option value="${esc(v)}"${v===S.boardSort?' selected':''}>${esc(l)}</option>`).join('');
+    const sortKey = x => {
+      if(S.boardSort==='first') return x.plan[0].s;
+      const parts = x.plan.filter(r=>r.dept===S.boardSort);
+      return parts.length ? Math.min(...parts.map(r=>r.s)) : Infinity;
+    };
+    const frozen = S.drag && S.drag.order;  // keep columns still while dragging
+    const jobs = sd.jobs.slice().sort((a,b)=> frozen ? frozen.indexOf(a.j.id)-frozen.indexOf(b.j.id) : (()=>{ const ka=sortKey(a), kb=sortKey(b); return ka===kb ? a.plan[0].s-b.plan[0].s : ka-kb; })());
+    const colW = {s:90, m:125, l:180}[S.zoom] || 125, wkW = 104;
+    let h = `<thead><tr><th class="bd-wk" style="width:${wkW}px">Week</th>${jobs.map(({j})=>{ const c = supColor(j);
+      return `<th class="bd-h" data-job="${esc(j.id)}" title="${esc((j.name||'')+(superKey(j)?' ('+superKey(j)+')':'')+' (double-click to edit)')}" style="width:${colW}px${c?`;border-top:4px solid ${c}`:''}">${esc(j.name||'Untitled job')}${superKey(j)?`<span class="bd-sup">${esc(superKey(j))}</span>`:''}</th>`; }).join('')}</tr></thead><tbody>`;
+    let lastMonth = -1;
+    sd.periods.forEach(k=>{
+      const fri = fromDayNum(k), newMonth = fri.getMonth()!==lastMonth;
+      lastMonth = fri.getMonth();
+      const nowc = k===sd.now ? ' now' : '';
+      h += `<tr class="${newMonth?'bd-month':''}"><td class="bd-wk${nowc}">${newMonth?`<b>${MON[fri.getMonth()]} '${String(fri.getFullYear()).slice(2)}</b> `:''}<span class="bd-d">${fmtShort(fri)}</span></td>`;
+      jobs.forEach(({j,plan})=>{
+        const hit = plan.filter(r=>overlaps(r,k,'week'));
+        const con = hit.find(r=>r.dept===PROD);
+        if(con){
+          const firstWk = P.week.idx(fromDayNum(con.s)), secondWk = firstWk + 7, c = supColor(j);
+          const phStart = phasesFor(j).filter(x=>P.week.idx(fromDayNum(x.s))===k).map(x=>shortName(x.name));
+          const label = k===firstWk ? `<b>${esc(superKey(j)||'No supervisor')}</b>` : k===secondWk ? `Const start ${fromDayNum(con.s).toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'2-digit'})}` : phStart.length ? `<span class="phl">${esc(phStart.join(' / '))}</span>` : '';
+          const accent = c ? `border-left:6px solid ${c};` : 'border-left:6px dashed #9AA5AB;';
+          const dc = j.status==='design' ? ` data-job="${esc(j.id)}" data-drag="Construction"` : '';
+          h += `<td class="bd fill con"${dc} style="background:${PROD_FILL};color:${inkFor(PROD_FILL)};${accent}" title="${esc((j.name||'')+': construction '+rangeTxt(con.s,con.e)+(superKey(j)?' ('+superKey(j)+')':''))}">${label}</td>`;
+        } else if(hit.length){
+          const fills = hit.map(stepFill);
+          const bg = fills.length===1 ? fills[0] : `linear-gradient(90deg,${fills.map((f,i)=>`${f} ${i/fills.length*100}%,${f} ${(i+1)/fills.length*100}%`).join(',')})`;
+          const ds = j.status==='design' ? ` data-job="${esc(j.id)}" data-drag="${esc(hit[hit.length-1].name)}"` : '';
+          h += `<td class="bd fill"${ds} style="background:${bg};color:${inkFor(fills[0])}" title="${esc(hit.map(r=>r.name+' ('+r.dept+'): '+rangeTxt(r.s,r.e)).join('\n'))}">${hit.map(r=>esc(shortName(r.name))).join(' / ')}</td>`;
+        } else h += `<td class="bd${nowc}"></td>`;
+      });
+      h += `</tr>`;
+    });
+    h += `</tbody>`;
+    $('table').innerHTML = h;
+    $('table').classList.add('grid-fixed');
+    $('table').style.width = (wkW + colW*jobs.length) + 'px';
+    const nowTd = $('table').querySelector('td.bd-wk.now'), key = S.tab+'board';
+    if(nowTd && S._scrolledFor !== key){ S._scrolledFor = key; tw.scrollTop = Math.max(0, nowTd.parentElement.offsetTop - 80); }
+  }
+
+  // ---------- standard steps editor ----------
+  function renderTplEditor(){
+    const rows = (S.tplDraft || steps()).map(x=>({...x}));
+    S.tplDraft = rows;
+    const depts = deptOrder();
+    let h = `<div class="inner"><datalist id="deptList">${depts.map(d=>`<option value="${esc(d)}"></option>`).join('')}</datalist><table><thead><tr><th>Step</th><th>Department</th><th>Duration</th><th></th><th>Alongside previous</th><th></th></tr></thead><tbody>`;
+    rows.forEach((r,i)=>{
+      h += `<tr data-i="${i}"><td><input data-f="name" value="${esc(r.name||'')}" aria-label="Step name"></td>
+        <td><input data-f="dept" list="deptList" value="${esc(r.dept||'')}" aria-label="Department"></td>
+        <td><input data-f="dur" type="number" min="1" step="1" value="${esc(r.dur||1)}" aria-label="Duration"></td>
+        <td><select data-f="unit" aria-label="Unit"><option value="days"${r.unit==='days'?' selected':''}>days</option><option value="weeks"${r.unit!=='days'?' selected':''}>weeks</option></select></td>
+        <td><input data-f="withPrev" type="checkbox"${r.withPrev?' checked':''}${i===0?' disabled':''} aria-label="Runs alongside previous step"></td>
+        <td><button type="button" class="rm" data-rm="${i}" aria-label="Remove ${esc(r.name||'step')}">×</button></td></tr>`;
+    });
+    h += `<tr><td colspan="6" class="fixed">Construction (Production) follows automatically, using each job's own duration.</td></tr></tbody></table>
+      <div class="tplact"><button type="button" class="ghost" id="tplAdd">Add a step</button><button type="button" class="primary" id="tplSave" style="flex:none">Save steps</button><button type="button" class="ghost" id="tplReset">Undo changes</button><span class="fixed" id="tplMsg"></span></div></div>`;
+    $('tplEditor').innerHTML = h;
+  }
+  function readTpl(){
+    $('tplEditor').querySelectorAll('tr[data-i]').forEach(tr=>{
+      const r = S.tplDraft[+tr.dataset.i];
+      tr.querySelectorAll('[data-f]').forEach(inp=>{
+        const f = inp.dataset.f;
+        r[f] = f==='withPrev' ? inp.checked : f==='dur' ? (parseFloat(inp.value)||1) : inp.value.trim();
+      });
+    });
+  }
+  $('tplEditor').addEventListener('input', ()=>{ S.tplDirty = true; readTpl(); $('tplMsg').textContent = 'Unsaved changes'; });
+  $('tplEditor').addEventListener('click', async e=>{
+    const rm = e.target.closest('[data-rm]');
+    if(rm){ readTpl(); S.tplDraft.splice(+rm.dataset.rm,1); if(S.tplDraft[0]) S.tplDraft[0].withPrev=false; S.tplDirty = true; renderTplEditor(); $('tplMsg').textContent='Unsaved changes'; return; }
+    if(e.target.id==='tplAdd'){ readTpl(); S.tplDraft.push({name:'New step', dept:'', dur:1, unit:'weeks'}); S.tplDirty = true; renderTplEditor(); $('tplMsg').textContent='Unsaved changes'; return; }
+    if(e.target.id==='tplReset'){ S.tplDraft = null; S.tplDirty = false; renderTplEditor(); return; }
+    if(e.target.id==='tplSave'){
+      readTpl();
+      const clean = S.tplDraft.filter(r=>r.name).map((r,i)=>({name:r.name, dept:r.dept||'Other', dur:Math.max(1,r.dur||1), unit:r.unit==='days'?'days':'weeks', withPrev: i>0 && !!r.withPrev}));
+      if(!clean.length){ $('tplMsg').textContent = 'Keep at least one step.'; return; }
+      try{
+        if(S.db) await S.db.doc('settings/schedule').set({steps:clean});
+        S.template = clean; S.tplDraft = null; S.tplDirty = false; renderTplEditor(); render();
+        $('tplMsg').textContent = 'Saved';
+      }catch(err){ $('tplMsg').textContent = "Couldn't save the steps. Try again."; }
+    }
+  });
+
+  // ---------- materials tab ----------
+  // ---------- people ----------
+  const people = () => Array.isArray(S.people) ? S.people : [];
+  const personName = id => { const p = people().find(x=>x.id===id); return p ? p.name : ''; };
+  // who owns an item on a job: the job's own choice, else the company default; "@super" means the job's supervisor
+  function ownerOf(j, x){
+    const m = (j.materials && j.materials[x.name]) || {};
+    const c = catalog().find(c=>c.name===x.name) || {};
+    const v = m.owner || c.owner || '';
+    if(v==='@super'){ const sn = superKey(j); const p = people().find(p=>p.name.toLowerCase()===sn.toLowerCase()); return p ? {key:p.id, name:p.name} : sn ? {key:'n:'+sn.toLowerCase(), name:sn} : {key:'', name:''}; }
+    const n = personName(v);
+    return n ? {key:v, name:n} : {key:'', name:''};
+  }
+  function ownerOptions(){
+    const list = people().map(p=>({key:p.id, name:p.name}));
+    S.jobs.forEach(j=>{ const sn = superKey(j); if(sn && !list.some(o=>o.name.toLowerCase()===sn.toLowerCase())) list.push({key:'n:'+sn.toLowerCase(), name:sn}); });
+    return list.sort((a,b)=>a.name.localeCompare(b.name));
+  }
+
+  // ---------- materials tab ----------
+  const STATUS_RANK = {none:0, selected:1, ordered:2, delivered:3, skip:4};
+  function sortMat(list){
+    const k = S.msort, dir = S.mdir || 1, big = 1e9;
+    const val = r => k==='order' ? (r.x.orderBy ?? big) : k==='need' ? (r.x.need ?? big) : k==='status' ? STATUS_RANK[r.x.status] : k==='lead' ? (r.x.lead ?? big)
+      : k==='job' ? String(r.j.name||'').toLowerCase() : k==='item' ? r.x.name.toLowerCase() : (r.o.name||'~').toLowerCase();
+    return list.slice().sort((a,b)=>{ const va = val(a), vb = val(b);
+      const c = va<vb ? -1 : va>vb ? 1 : 0;
+      return c ? c*dir : ((a.x.orderBy??big) - (b.x.orderBy??big)) || String(a.j.name).localeCompare(String(b.j.name)); });
+  }
+  function renderMaterials(home=false){
+    const tw = $('tableWrap'); tw.classList.remove('tall');
+    const opts = ownerOptions();
+    // the home page is the materials list fixed to one person, by urgency, without the owner column
+    const keep = {owner:S.owner, matView:S.matView};
+    if(home){ S.owner = S.me; S.matView = 'urgency'; }
+    try{ renderMaterialsInner(opts, home); } finally { if(home){ S.owner = keep.owner; S.matView = keep.matView; } }
+  }
+  function renderMaterialsInner(opts, home){
+    const tw = $('tableWrap');
+    if(!home && S.owner && S.owner!=='all' && S.owner!=='none' && !opts.some(o=>o.key===S.owner)) S.owner = 'all';
+    if(!home) $('ownerPick').innerHTML = `<option value="all">Everyone</option>` + opts.map(o=>`<option value="${esc(o.key)}"${o.key===S.owner?' selected':''}>${esc(o.name)}</option>`).join('') + `<option value="none"${S.owner==='none'?' selected':''}>Unassigned</option>`;
+    if(!home) $('ownerPick').value = S.owner || 'all';
+    const jobs = S.jobs.filter(j=>!isOff(j) && (S.showDesign || j.status!=='design'));
+    const noType = jobs.filter(j=>!ctypeOf(j));
+    const today = dayNum(new Date()), fri = P.week.idx(new Date());
+    let rows = []; jobs.forEach(j=>materialsFor(j).forEach(x=>{ if(x.status!=='skip') rows.push({j, x, o:ownerOf(j,x)}); }));
+    if(S.owner==='none') rows = rows.filter(r=>!r.o.key);
+    else if(S.owner && S.owner!=='all') rows = rows.filter(r=>r.o.key===S.owner);
+    const open = rows.filter(r=>(r.x.status==='none'||r.x.status==='selected') && r.x.orderBy!=null).sort((a,b)=>a.x.orderBy-b.x.orderBy);
+    const onOrder = rows.filter(r=>r.x.status==='ordered').sort((a,b)=>(a.x.need??0)-(b.x.need??0));
+    const who = home ? '' : S.owner==='all' || !S.owner ? '' : S.owner==='none' ? 'Unassigned: ' : `${esc((opts.find(o=>o.key===S.owner)||{}).name||'')}: `;
+    let t = '';
+    if(!rows.length) t = noType.length && S.owner==='all' ? 'Give your jobs a construction type to see what needs ordering and when.' : `${who}nothing to track right now.`;
+    else {
+      const late = open.filter(r=>r.x.orderBy < today).length, wk = open.filter(r=>r.x.orderBy >= today && r.x.orderBy <= fri).length, nx = open.filter(r=>r.x.orderBy > fri && r.x.orderBy <= fri+28).length;
+      const parts = [];
+      if(late) parts.push(`<b>${late}</b> past their order-by date`);
+      parts.push(`<b>${wk}</b> to order this week`);
+      parts.push(`${nx} in the next 4 weeks`);
+      if(onOrder.length) parts.push(`${onOrder.length} on order`);
+      t = who + parts.join(', ') + '.';
+      const decide = open.filter(r=>r.x.flags.includes('Selections finish too late')).length;
+      if(decide) t += ` ${decide} item${decide===1?' is':'s are'} scheduled to be selected after they need to be ordered.`;
+    }
+    if(noType.length && rows.length && S.owner==='all') t += ` ${noType.length} job${noType.length===1?' has':'s have'} no construction type yet.`;
+    $('summary').innerHTML = t;
+    if(!rows.length){ tw.hidden = true; return; }
+    tw.hidden = false;
+
+    let groups;
+    const byNeed = S.matDate==='need';
+    if(S.matView==='all'){
+      groups = [['All items', rows.filter(r=>r.x.status!=='delivered'), ''], ['Delivered or approved', rows.filter(r=>r.x.status==='delivered'), '']];
+    } else if(S.matView==='week'){
+      // week-by-week list, by order-by date (things still to order) or needed-on-site date (everything not yet delivered)
+      const list = byNeed ? rows.filter(r=>r.x.status!=='delivered' && r.x.need!=null).sort((a,b)=>a.x.need-b.x.need) : open;
+      const dateOf = r => byNeed ? r.x.need : r.x.orderBy;
+      const m = new Map();
+      list.forEach(r=>{ const d = dateOf(r); const k = d < today ? 'past' : P.week.idx(fromDayNum(d)); if(!m.has(k)) m.set(k, []); m.get(k).push(r); });
+      groups = [...m.entries()].sort((a,b)=> a[0]==='past' ? -1 : b[0]==='past' ? 1 : a[0]-b[0]).map(([k,l])=>[
+        k==='past' ? (byNeed ? 'Needed before today' : 'Past their order-by date') : (k===fri ? 'This week, ending ' : 'Week ending ') + fmtDate(fromDayNum(k)), l, k==='past'?'late':'' ]);
+    } else {
+      groups = [
+        ['Past their order-by date', open.filter(r=>r.x.orderBy < today), 'late'],
+        ['Order this week', open.filter(r=>r.x.orderBy >= today && r.x.orderBy <= fri), ''],
+        ['Order in the next 4 weeks', open.filter(r=>r.x.orderBy > fri && r.x.orderBy <= fri+28), ''],
+        ['Order later', open.filter(r=>r.x.orderBy > fri+28), ''],
+        ['On order or submitted', onOrder, ''],
+      ];
+    }
+    const cols = [['job','Job'],['item','Item'],...(home?[]:[['owner','Owner']]),['need','Needed on site'],['lead','Lead'],['status','Status'],['order','Order by'],[null,'Notes']];
+    $('msort').value = S.msort;
+    let h = `<thead><tr>${cols.map(([k,l])=> k ? `<th class="sortable${S.msort===k?' on':''}" data-msort="${k}" tabindex="0" aria-sort="${S.msort===k?(S.mdir>0?'ascending':'descending'):'none'}">${l}<span class="arr">${S.msort===k?(S.mdir>0?'▲':'▼'):''}</span></th>` : `<th>${l}</th>`).join('')}</tr></thead><tbody>`;
+    groups.forEach(([label, list0, cls])=>{
+      if(!list0.length) return;
+      const list = sortMat(list0);
+      h += `<tr class="sub${cls?' '+cls:''}"><td colspan="${home?7:8}">${esc(label)} <span class="cnt">${list.length}</span></td></tr>`;
+      list.forEach(({j,x,o},i)=>{
+        const lead = x.kind==='task' ? `${x.lead} wk before start${x.chosen!=null?' (this job)':''}` : x.status!=='none' && x.chosen ? `${x.chosen} wk` : (x.lMin===x.lMax ? `${x.lMax} wk` : `${x.lMin}–${x.lMax} wk`);
+        const notes = [...x.flags];
+        if(x.kind!=='task' && x.status==='ordered' && x.promised) notes.unshift('Promised '+fmtShort(parseDate(x.promised)));
+        h += `<tr class="mrow${i===list.length-1?' grp-end':''}" data-open="${esc(j.id)}" tabindex="0"><td>${esc(j.name||'Untitled job')}</td><td>${esc(x.name)}</td>${home?'':`<td>${o.name?esc(o.name):'<span class="zero">–</span>'}</td>`}<td>${x.need!=null?fmtDate(fromDayNum(x.need)):'–'} <span class="cnt">${esc(x.phase)}</span></td><td>${lead}</td><td><select class="inl" data-istat data-job="${esc(j.id)}" data-item="${esc(x.name)}" aria-label="${esc((j.name||'')+' '+x.name)} status">${Object.entries(statusSet(x)).map(([k,v])=>`<option value="${k}"${k===x.status?' selected':''}>${v}</option>`).join('')}</select></td><td><b>${x.orderBy!=null?fmtDate(fromDayNum(x.orderBy)):'–'}</b></td><td>${notes.map(n=>`<span class="${n.startsWith('Promised')?'pill':'flag'}">${esc(n)}</span>`).join(' ')}</td></tr>`;
+      });
+    });
+    h += '</tbody>';
+    $('table').innerHTML = h;
+    $('table').classList.add('mat');
+  }
+  // change an item's status right from the Materials list
+  $('table').addEventListener('change', e=>{
+    const sel = e.target.closest('[data-istat]'); if(!sel) return;
+    const j = S.jobs.find(x=>x.id===sel.dataset.job); if(!j) return;
+    const item = sel.dataset.item, before = j.materials && typeof j.materials==='object' ? JSON.parse(JSON.stringify(j.materials)) : {};
+    const next = JSON.parse(JSON.stringify(before)), m = next[item] = next[item] || {};
+    if(sel.value==='none') delete m.status; else m.status = sel.value;
+    const isTask = (catalog().find(c=>c.name===item)||{}).kind==='task';
+    if(!isTask && (m.status==='ordered' || m.status==='delivered') && !m.ordered) m.ordered = iso(new Date());
+    if(!Object.keys(m).length) delete next[item];
+    applyJobFields(j.id, {materials: next});
+    const label = sel.options[sel.selectedIndex].text;
+    showToast(`${esc(j.name||'Job')}: ${esc(item)} marked ${esc(label.toLowerCase())}.`, ()=>applyJobFields(j.id, {materials: before}));
+  });
+  $('table').addEventListener('click', e=>{
+    if(e.target.closest('select')) return;
+    const th = e.target.closest('[data-msort]');
+    if(th){ const k = th.dataset.msort; if(S.msort===k) S.mdir = -S.mdir; else { S.msort = k; S.mdir = 1; } render(); return; }
+    const r = e.target.closest('[data-open]'); if(r) openEditor(r.dataset.open, 'materials'); });
+  $('table').addEventListener('keydown', e=>{ if(e.target.closest('select')) return; if(e.key==='Enter' && e.target.closest('[data-msort]')){ e.target.click(); return; } if(e.key==='Enter'){ const r = e.target.closest('[data-open]'); if(r) openEditor(r.dataset.open, 'materials'); } });
+
+  // ---------- construction types editor ----------
+  function ctDraft(){
+    if(!S.ctDraft) S.ctDraft = { catalog: JSON.parse(JSON.stringify(catalog())), ctypes: JSON.parse(JSON.stringify(ctypes())), buffer: bufferW(), sel: (S.ctDraft && S.ctDraft.sel) || ctypes()[0].id };
+    if(!S.ctDraft.ctypes.some(t=>t.id===S.ctDraft.sel)) S.ctDraft.sel = S.ctDraft.ctypes[0] && S.ctDraft.ctypes[0].id;
+    return S.ctDraft;
+  }
+  function renderCtEditor(){
+    const d = ctDraft(), t = d.ctypes.find(x=>x.id===d.sel);
+    let h = `<div class="inner">
+      <p class="calc-h">Lead times</p>
+      <p class="fixed" style="margin:0 0 6px">For a Deadline, like a permit, the longest lead is how many weeks before construction start it's due. Deadlines skip the buffer.</p>
+      <table><thead><tr><th>Item</th><th>Shortest lead, weeks</th><th>Longest lead, weeks</th><th>On site early, weeks</th><th>Default owner</th><th>Kind</th><th></th></tr></thead><tbody>`;
+    d.catalog.forEach((c,i)=>{
+      h += `<tr data-ci="${i}"><td><input data-cf="name" value="${esc(c.name)}" aria-label="Item name"></td><td><input data-cf="leadMin" type="number" min="0" step="0.5" value="${esc(c.leadMin)}" aria-label="${esc(c.name)} shortest lead"></td><td><input data-cf="leadMax" type="number" min="0" step="0.5" value="${esc(c.leadMax)}" aria-label="${esc(c.name)} longest lead"></td><td><input data-cf="early" type="number" min="0" step="0.5" value="${esc(c.early||0)}" aria-label="${esc(c.name)} weeks on site before its phase"></td><td><select data-cf="owner" aria-label="${esc(c.name)} default owner"><option value="">Unassigned</option><option value="@super"${c.owner==='@super'?' selected':''}>Job supervisor</option>${people().map(p=>`<option value="${esc(p.id)}"${c.owner===p.id?' selected':''}>${esc(p.name)}</option>`).join('')}</select></td><td><select data-cf="kind" aria-label="${esc(c.name)} kind"><option value="">Material</option><option value="task"${c.kind==='task'?' selected':''}>Deadline</option></select></td><td><button type="button" class="rm" data-crm="${i}" aria-label="Remove ${esc(c.name)}">×</button></td></tr>`;
+    });
+    h += `</tbody></table>
+      <div class="tplact"><button type="button" class="ghost" data-ca="additem">Add an item</button>
+      <label class="refbox">Buffer before the need date <input data-cb type="number" min="0" step="0.5" value="${esc(d.buffer)}" style="width:70px"> weeks</label></div>
+      <p class="calc-h" style="margin-top:20px">Construction types</p>
+      <div class="tplact" style="margin-top:0"><select data-ca="pick" aria-label="Construction type">${d.ctypes.map(x=>`<option value="${esc(x.id)}"${x.id===d.sel?' selected':''}>${esc(x.name)}</option>`).join('')}</select>
+      <button type="button" class="ghost" data-ca="addtype">Add a construction type</button>${d.ctypes.length>1?`<button type="button" class="ghost danger" data-ca="deltype">Remove this type</button>`:''}</div>`;
+    if(t){
+      h += `<div class="cols2"><div class="field"><label>Name</label><input data-tn value="${esc(t.name)}"></div><div class="field"><label>Typical length, months</label><input data-tm type="number" min="0.5" step="0.5" value="${esc(t.months||'')}"></div></div>
+      <p class="fixed" style="margin:0 0 6px">Phases are placed as a percent of the job's construction length, so they stretch to fit a 4-month or a 12-month job.</p>
+      <table><thead><tr><th>Phase</th><th>Starts at %</th><th>Ends at %</th><th></th></tr></thead><tbody>`;
+      t.phases.forEach((x,i)=>{
+        h += `<tr data-pi="${i}"><td><input data-pf="name" value="${esc(x.name)}" aria-label="Phase name"></td><td><input data-pf="start" type="number" min="0" max="100" value="${esc(x.start)}" aria-label="${esc(x.name)} start percent"></td><td><input data-pf="end" type="number" min="0" max="100" value="${esc(x.end)}" aria-label="${esc(x.name)} end percent"></td><td><button type="button" class="rm" data-prm="${i}" aria-label="Remove ${esc(x.name)}">×</button></td></tr>`;
+      });
+      h += `</tbody></table><div class="tplact"><button type="button" class="ghost" data-ca="addphase">Add a phase</button></div>
+      <p class="calc-h" style="margin-top:16px">Needed on site at</p>
+      <p class="fixed" style="margin:0 0 6px">Weeks count from the first day of construction on a typical-length job, using the longest lead time plus the buffer.</p>
+      <table><thead><tr><th>Item</th><th>Needed at</th><th>Needed, week</th><th>Order by</th></tr></thead><tbody>`;
+      const L = (parseFloat(t.months)||0)*52/12;
+      d.catalog.forEach(c=>{
+        const cur = t.items[c.name] || '', phs = cur==='@start' ? {start:0} : t.phases.find(x=>x.name===cur);
+        let need = '–', ob = '–';
+        if(c.kind==='task' && cur && L){ need = 'Construction start'; const w = +c.leadMax||0; ob = w ? `${w} wk before start` : 'Construction start'; }
+        else if(phs && L){ const nw = Math.round(phs.start/100*L - (+c.early||0)); need = `Week ${nw}`; const o = Math.round(nw - (Math.max(+c.leadMin||0, +c.leadMax||0) + (+d.buffer||0)));
+          ob = o>0 ? `Week ${o}` : o===0 ? 'Construction start' : `${-o} wk before start`; }
+        h += `<tr><td>${esc(c.name)}${+c.early?` <span class="cnt">${c.early} wk early</span>`:''}</td><td><select data-im="${esc(c.name)}" aria-label="${esc(c.name)} needed at"><option value="">Not needed on this type</option><option value="@start"${cur==='@start'?' selected':''}>Construction start</option>${t.phases.map(x=>`<option value="${esc(x.name)}"${x.name===cur?' selected':''}>Start of ${esc(x.name)}</option>`).join('')}</select></td><td>${need}</td><td>${ob}</td></tr>`;
+      });
+      h += `</tbody></table>`;
+    }
+    h += `<div class="tplact"><button type="button" class="primary" data-ca="save" style="flex:none">Save</button><button type="button" class="ghost" data-ca="reset">Undo changes</button><span class="fixed" id="ctMsg">${S.ctDirty?'Unsaved changes':''}</span></div></div>`;
+    $('ctEditor').innerHTML = h;
+  }
+  function readCt(){
+    const d = ctDraft(), t = d.ctypes.find(x=>x.id===d.sel), box = $('ctEditor');
+    box.querySelectorAll('tr[data-ci]').forEach(tr=>{
+      const c = d.catalog[+tr.dataset.ci], old = c.name;
+      tr.querySelectorAll('[data-cf]').forEach(inp=>{ const f = inp.dataset.cf; c[f] = f==='name' ? inp.value.trim() : (f==='owner'||f==='kind') ? inp.value : (parseFloat(inp.value)||0); });
+      if(old!==c.name) d.ctypes.forEach(x=>{ if(x.items[old]!==undefined){ x.items[c.name] = x.items[old]; delete x.items[old]; } });
+    });
+    const b = box.querySelector('[data-cb]'); if(b) d.buffer = Math.max(0, parseFloat(b.value)||0);
+    if(t){
+      const tn = box.querySelector('[data-tn]'); if(tn) t.name = tn.value.trim() || t.name;
+      const tm = box.querySelector('[data-tm]'); if(tm) t.months = parseFloat(tm.value) || t.months;
+      box.querySelectorAll('tr[data-pi]').forEach(tr=>{
+        const x = t.phases[+tr.dataset.pi], old = x.name;
+        tr.querySelectorAll('[data-pf]').forEach(inp=>{ const f = inp.dataset.pf; x[f] = f==='name' ? inp.value.trim() : Math.min(100, Math.max(0, parseFloat(inp.value)||0)); });
+        if(old!==x.name) Object.keys(t.items).forEach(k=>{ if(t.items[k]===old) t.items[k] = x.name; });
+      });
+      box.querySelectorAll('[data-im]').forEach(sel=>{ if(sel.value) t.items[sel.dataset.im] = sel.value; else delete t.items[sel.dataset.im]; });
+    }
+  }
+  $('ctEditor').addEventListener('change', e=>{
+    readCt(); S.ctDirty = true;
+    if(e.target.dataset.ca==='pick'){ S.ctDraft.sel = e.target.value; }
+    renderCtEditor();
+  });
+  $('ctEditor').addEventListener('click', async e=>{
+    const el = e.target.closest('[data-ca],[data-crm],[data-prm]'); if(!el || el.tagName==='SELECT') return;
+    readCt(); const d = ctDraft(), t = d.ctypes.find(x=>x.id===d.sel);
+    if(el.dataset.crm!=null){ const c = d.catalog.splice(+el.dataset.crm,1)[0]; d.ctypes.forEach(x=>delete x.items[c.name]); S.ctDirty = true; }
+    else if(el.dataset.prm!=null && t){ const x = t.phases.splice(+el.dataset.prm,1)[0]; Object.keys(t.items).forEach(k=>{ if(t.items[k]===x.name) delete t.items[k]; }); S.ctDirty = true; }
+    else if(el.dataset.ca==='additem'){ d.catalog.push({name:'New item', leadMin:6, leadMax:6, early:0}); S.ctDirty = true; }
+    else if(el.dataset.ca==='addphase' && t){ t.phases.push({name:'New phase', start:90, end:100}); S.ctDirty = true; }
+    else if(el.dataset.ca==='addtype'){ const id = 't'+Date.now().toString(36); d.ctypes.push({id, name:'New construction type', months:6, phases:[{name:'Construction',start:0,end:100}], items:{}}); d.sel = id; S.ctDirty = true; }
+    else if(el.dataset.ca==='deltype' && d.ctypes.length>1){ d.ctypes = d.ctypes.filter(x=>x.id!==d.sel); d.sel = d.ctypes[0].id; S.ctDirty = true; }
+    else if(el.dataset.ca==='reset'){ S.ctDraft = null; S.ctDirty = false; }
+    else if(el.dataset.ca==='save'){
+      const names = d.catalog.map(c=>c.name).filter(Boolean);
+      if(new Set(names.map(n=>n.toLowerCase())).size !== names.length){ $('ctMsg').textContent = 'Two items share a name. Rename one before saving.'; return; }
+      const clean = { catalog: d.catalog.filter(c=>c.name).map(c=>({name:c.name, leadMin:Math.max(0,+c.leadMin||0), leadMax:Math.max(+c.leadMin||0, +c.leadMax||0), early:Math.max(0,+c.early||0), owner:c.owner||'', kind:c.kind==='task'?'task':''})),
+        ctypes: d.ctypes.map(x=>({id:x.id, name:x.name, months:parseFloat(x.months)||null, phases:x.phases.filter(p=>p.name).map(p=>({name:p.name, start:Math.min(p.start,p.end), end:Math.max(p.start,p.end)})), items:x.items})),
+        bufferWeeks: d.buffer };
+      try{
+        if(S.db) await S.db.doc('settings/construction').set(clean);
+        S.catalog = clean.catalog; S.ctypes = clean.ctypes; S.bufferW = clean.bufferWeeks;
+        S.ctDirty = false; S.ctDraft = null; renderCtEditor(); render(); $('ctMsg').textContent = 'Saved';
+        return;
+      }catch(err){ $('ctMsg').textContent = "Couldn't save. Try again."; return; }
+    }
+    renderCtEditor();
+  });
+
+  // ---------- people editor ----------
+  // access comes from the sign-in list; the draft remembers unsaved changes
+  const accessOf = p => p.access!==undefined ? p.access : ((S.members||[]).find(m=>(m.email||'').toLowerCase()===(p.email||'').toLowerCase() && p.email)||{}).role || '';
+  async function loadMembers(){
+    if(!S.sb) return;
+    const r = await S.sb.from('fc_members').select('email,name,role');
+    if(!r.error){ S.members = r.data; if(!S.peopleDirty){ S.peopleDraft = null; renderPeopleEditor(); } }
+  }
+  async function syncMembers(list){
+    // make the sign-in list match the People panel; never removes or demotes the person saving
+    const me = (S.myEmail||'').toLowerCase();
+    const want = new Map();
+    list.forEach(p=>{ const e = (p.email||'').toLowerCase(); if(e && p.access) want.set(e, {email:e, name:p.name, role:p.access}); });
+    if(me){ const cur = want.get(me); want.set(me, {email:me, name:(cur&&cur.name)||'', role:'admin'}); }
+    const have = new Map((S.members||[]).map(m=>[(m.email||'').toLowerCase(), m]));
+    const up = [...want.values()].filter(w=>{ const h = have.get(w.email); return !h || h.role!==w.role || (w.name && h.name!==w.name); });
+    const del = [...have.keys()].filter(e=>!want.has(e));
+    if(up.length){ const r = await S.sb.from('fc_members').upsert(up); if(r.error) throw r.error; }
+    for(const e of del){ const r = await S.sb.from('fc_members').delete().eq('email', have.get(e).email); if(r.error) throw r.error; }
+    await loadMembers();
+  }
+  function renderPeopleEditor(){
+    if(!S.peopleDraft) S.peopleDraft = JSON.parse(JSON.stringify(people()));
+    const d = S.peopleDraft;
+    let h = `<div class="inner"><p class="fixed" style="margin:0 0 8px">Everyone who can be assigned materials. Supervisors typed on jobs are matched to people here by name.</p>
+      <table><thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Access</th><th></th></tr></thead><tbody>`;
+    d.forEach((p,i)=>{ h += `<tr data-pi2="${i}"><td><input data-pp="name" value="${esc(p.name)}" aria-label="Name"></td><td><input data-pp="role" list="roleList" value="${esc(p.role||'')}" aria-label="Role" placeholder="Supervisor, PM, Designer…"></td><td><input data-pp="email" type="email" value="${esc(p.email||'')}" aria-label="Email" placeholder="name@company.com"></td><td><select data-pp="access" aria-label="${esc(p.name)} access"><option value="">Can't sign in</option><option value="ordering"${accessOf(p)==='ordering'?' selected':''}>Ordering</option><option value="admin"${accessOf(p)==='admin'?' selected':''}>Admin</option></select></td><td><button type="button" class="rm" data-prm2="${i}" aria-label="Remove ${esc(p.name)}">×</button></td></tr>`; });
+    if(!d.length) h += `<tr><td colspan="5" class="fixed">No people yet. Add your team below.</td></tr>`;
+    h += `</tbody></table><datalist id="roleList"><option value="Supervisor"></option><option value="Project manager"></option><option value="Designer"></option><option value="Purchasing"></option><option value="Estimator"></option></datalist>
+      <div class="tplact"><button type="button" class="ghost" data-pa="add">Add a person</button><button type="button" class="primary" data-pa="save" style="flex:none">Save people</button><button type="button" class="ghost" data-pa="reset">Undo changes</button><span class="fixed" id="pplMsg">${S.peopleDirty?'Unsaved changes':''}</span></div></div>`;
+    $('peopleEditor').innerHTML = h;
+  }
+  function readPeople(){ $('peopleEditor').querySelectorAll('tr[data-pi2]').forEach(tr=>{ const p = S.peopleDraft[+tr.dataset.pi2]; tr.querySelectorAll('[data-pp]').forEach(inp=>p[inp.dataset.pp] = inp.value.trim()); }); }
+  $('peopleEditor').addEventListener('input', ()=>{ readPeople(); S.peopleDirty = true; $('pplMsg').textContent = 'Unsaved changes'; });
+  $('peopleEditor').addEventListener('click', async e=>{
+    const el = e.target.closest('[data-pa],[data-prm2]'); if(!el) return;
+    readPeople();
+    if(el.dataset.prm2!=null){ S.peopleDraft.splice(+el.dataset.prm2,1); S.peopleDirty = true; }
+    else if(el.dataset.pa==='add'){ S.peopleDraft.push({id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), name:'', role:''}); S.peopleDirty = true; renderPeopleEditor(); const ins = $('peopleEditor').querySelectorAll('[data-pp="name"]'); ins[ins.length-1].focus(); return; }
+    else if(el.dataset.pa==='reset'){ S.peopleDraft = null; S.peopleDirty = false; }
+    else if(el.dataset.pa==='save'){
+      const withAccess = S.peopleDraft.filter(p=>p.name).map(p=>({...p, access:accessOf(p)}));
+      const missing = withAccess.find(p=>p.access && !(p.email||'').trim());
+      if(missing){ $('pplMsg').textContent = `${missing.name} needs an email to sign in.`; return; }
+      const clean = withAccess.map(p=>({id:p.id, name:p.name.replace(/\s+/g,' '), role:p.role||'', email:(p.email||'').trim().toLowerCase()}));
+      if(new Set(clean.map(p=>p.name.toLowerCase())).size !== clean.length){ $('pplMsg').textContent = 'Two people share a name. Make each one unique.'; return; }
+      try{
+        if(S.db) await S.db.doc('settings/people').set({people:clean});
+        if(S.sb) await syncMembers(withAccess.map(p=>({...p, email:(p.email||'').trim().toLowerCase()})));
+        S.people = clean; S.peopleDraft = null; S.peopleDirty = false; renderPeopleEditor(); renderCtEditor(); render(); $('pplMsg').textContent = 'Saved'; return;
+      }catch(err){ $('pplMsg').textContent = "Couldn't save. Try again."; return; }
+    }
+    renderPeopleEditor();
+  });
+
+  // ---------- home: my list ----------
+  function setMe(key){ S.me = key || ''; try{ if(S.me) localStorage.setItem('fc_me', S.me); else localStorage.removeItem('fc_me'); }catch(e){} render(); }
+  function renderHome(){
+    const opts = ownerOptions();
+    if(S.me && !opts.some(o=>o.key===S.me) && (S.storage!=='loading')) S.me = '';
+    if(!S.me){
+      $('summary').textContent = S.storage==='loading' ? '' : 'Pick your name to see the materials and deadlines you’re responsible for. This browser will remember you.';
+      $('tableWrap').hidden = true;
+      const hp = $('homePick'); hp.hidden = S.storage==='loading';
+      hp.innerHTML = opts.length ? `<div class="people-grid">${opts.map(o=>`<button type="button" class="person" data-me="${esc(o.key)}">${esc(o.name)}</button>`).join('')}</div>` : '<p class="fixed">No people yet. Add your team in the People panel on the Materials tab.</p>';
+      return;
+    }
+    renderMaterials(true);
+    const name = (opts.find(o=>o.key===S.me)||{}).name || '';
+    $('summary').innerHTML = ($('summary').innerHTML || '') + ` <button type="button" class="linkbtn" id="notMe">Not ${esc(name)}?</button>`;
+    if(!$('tableWrap').hidden) return;
+    $('summary').innerHTML = `Nothing on your list right now. <button type="button" class="linkbtn" id="notMe">Not ${esc(name)}?</button>`;
+  }
+  $('homePick').addEventListener('click', e=>{ const b = e.target.closest('[data-me]'); if(b) setMe(b.dataset.me); });
+  $('summary').addEventListener('click', e=>{ if(e.target.id==='notMe') setMe(''); });
+
+  function render(){
+    renderList();
+    const ag = aggregate();
+    const sup = S.tab==='supers', sch = S.tab==='schedule', mat = S.tab==='materials', home = S.tab==='home';
+    const meName = home && S.me ? (ownerOptions().find(o=>o.key===S.me)||{}).name : '';
+    $('mainTitle').textContent = home ? (meName ? `${meName}'s list` : 'My list') : sup ? 'Supervisor workload' : sch ? 'Master schedule' : mat ? 'Materials to order' : 'All jobs';
+    $('noteMats').hidden = !mat; $('ctBox').hidden = !mat; $('peopleBox').hidden = !mat;
+    $('ownerWrap').hidden = !mat; $('matSeg').hidden = !mat; $('msortWrap').hidden = !mat; $('mdateSeg').hidden = !(mat && S.matView==='week');
+    $('noteSupers').hidden = !sup; $('noteBilling').hidden = sup || sch || mat || home; $('noteSched').hidden = !sch; $('tplBox').hidden = !sch;
+    $('legActive').hidden = sup || sch || mat || home;
+    document.querySelector('.toolbar').hidden = home; const oneDept = sch && S.sview==='dept' && S.deptView && S.deptView!=='all';
+    $('legLoad').hidden = !(sup || (sch && S.sview==='dept' && !oneDept)); $('legDept').hidden = !(sch && (S.sview!=='dept' || oneDept));
+    $('deptWrap').hidden = !(sch && S.sview==='dept');
+    $('schedSeg').hidden = !sch;
+    $('periodSeg').hidden = (sch && S.sview==='board') || mat;
+    $('zoomSeg').hidden = !(sch && S.sview==='board'); $('sortWrap').hidden = !(sch && S.sview==='board');
+    ['s','m','l'].forEach(z=>$('tableWrap').classList.toggle('z-'+z, S.zoom===z));
+    if(!sch) $('tableWrap').classList.remove('tall');
+    if(!(sch && S.sview==='board')){ $('table').classList.remove('grid-fixed'); $('table').style.width = ''; }
+    if(!mat && !home) $('table').classList.remove('mat');
+    $('homePick').hidden = true;
+    if(home){ $('chart').hidden = true; renderHome(); }
+    else if(mat){ $('chart').hidden = true; renderMaterials(); }
+    else if(sup){ $('chart').hidden = true; renderSupersSummary(ag); renderSupers(ag); }
+    else if(sch){ $('chart').hidden = true; renderSchedule(); }
+    else { renderSummary(ag); renderChart(ag); renderTable(ag); }
+    const st = $('saveStatus');
+    st.textContent = S.storage==='loading' ? 'Loading jobs…' : S.storage==='db' ? 'Saved to the TR database' : 'Not connected: changes won’t be saved';
+  }
+
+  // ---------- editor ----------
+  const F = id => $('f-'+id);
+  function setEditStatus(st){
+    S.editStatus = st;
+    document.querySelectorAll('[data-status]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.status===st));
+    F('design').hidden = st!=='design'; F('active').hidden = st!=='active';
+    // a design job going to contract: start the revised contract from its sell price
+    if(st==='active' && !(num(F('revised').value)>0) && num(F('price').value)>0) F('revised').value = F('price').value;
+    F('constartWrap').hidden = st!=='active';
+    renderStepFields();
+    renderEditorExtras();
+    preview();
+  }
+  function formJob(){
+    return { ctype:F('ctype').value, conStart:F('constart').value, name:F('name').value.trim(), status:S.editStatus, supervisor:F('super').value.trim().replace(/\s+/g,' '),
+      price:num(F('price').value), start:F('start').value, duration:parseFloat(F('dur').value), durUnit:F('unit').value,
+      revised:num(F('revised').value), invoiced:num(F('invoiced').value), valueComplete:num(F('value').value),
+      months:parseFloat(F('months').value), asof:F('asof').value };
+  }
+  function preview(){
+    const fj = formJob(), s = schedule(fj);
+    const row = (k,v,sub) => `<div class="calc-row"><span>${k}</span><b>${v}</b></div>${sub?`<div class="calc-sub">${sub}</div>`:''}`;
+    let h = '<p class="calc-h">Calculated</p>';
+    if(fj.status!=='design'){
+      const c = activeCalc(fj), ok = fj.revised>0;
+      const sg = v => (v<0?'−':'')+money(Math.abs(v));
+      h += row('Balance to bill', ok ? sg(c.balance) : '–');
+      h += row('Cost to complete', ok ? sg(c.ctc) : '–');
+      if(ok && c.balance<=0 && c.balance>=0) h += row('Weekly billing','Fully billed');
+      else h += row('Weekly billing', s ? money(s.per) : '–', s ? `${s.n} weeks, ${fmtShort(s.first)} to ${fmtDate(s.last)}` : '');
+    } else {
+      const plan = jobPlan({...fj, stepDates: S.stepEdit && !S.stepEdit.auto ? S.stepEdit.dates : null});
+      if(plan) h += row('Design kickoff', fmtDate(fromDayNum(plan[0].s)), `${Math.round((plan[plan.length-1].s - plan[0].s)/7)} weeks before construction`);
+      h += row('Weekly billing', s ? money(s.per) : '–', s ? `${s.n} weeks, ${fmtShort(s.first)} to ${fmtDate(s.last)}` : '');
+    }
+    F('calc').innerHTML = h;
+  }
+  const isAdmin = () => S.role==='admin' || !S.sb;
+  // Ordering level: everything outside Materials is read-only in the job window
+  function applyRO(){
+    const ro = !isAdmin();
+    document.querySelectorAll('#editor [data-secbox="details"] :is(input,select,button), #editor [data-secbox="schedule"] :is(input,select,button)').forEach(el=>{ el.disabled = ro; });
+    F('delete').hidden = ro || S.sel==='new';
+    F('save').textContent = ro ? 'Save materials' : 'Save job';
+    let note = $('roNote');
+    if(ro && !note){ note = document.createElement('p'); note.id = 'roNote'; note.className = 'fixed'; note.style.cssText = 'margin:0 22px 8px;font-size:14px'; note.textContent = 'You can update materials. Job details and schedules are changed by an admin.'; F('err').before(note); }
+    if(note) note.hidden = !ro;
+  }
+  function renderStepFields(){
+    const box = F('steps');
+    if(!S.stepEdit) S.stepEdit = {auto:true, dates:{}};
+    const fj = formJob();
+    if(fj.status!=='design'){ box.innerHTML = ''; return; }
+    const auto = jobPlan({...fj, stepDates:null}, false);
+    let h = `<p class="calc-h">Step dates</p>`;
+    if(!auto){ box.innerHTML = h + `<p class="fixed">Enter a production start and duration to see step dates.</p>`; return; }
+    h += `<label class="chk"><input type="checkbox" id="f-auto"${S.stepEdit.auto?' checked':''}> Use automatic dates, worked back from production start</label>`;
+    if(!S.stepEdit.auto) h += `<p class="fixed" style="font-size:13px;margin:0 0 6px">Changing a start date moves that step and every step before it. Changing an end date only changes that step's length.</p>`;
+    auto.filter(r=>r.dept!==PROD).forEach(r=>{
+      const aS = iso(fromDayNum(r.s)), aE = iso(fromDayNum(r.e-1));
+      const o = S.stepEdit.dates[r.name];
+      if(S.stepEdit.auto){
+        h += `<div class="steprow"><span class="nm">${esc(r.name)}</span><span class="dt">${rangeTxt(r.s,r.e)}</span></div>`;
+      } else {
+        const adj = o && (o.start!==aS || o.end!==aE);
+        h += `<div class="steprow${adj?' adj':''}" data-step="${esc(r.name)}"><span class="nm">${esc(r.name)}</span><span class="dt">auto ${esc(fmtShort(fromDayNum(r.s)))}–${esc(fmtShort(fromDayNum(r.e-1)))}</span>
+          <div class="ins"><input type="date" value="${esc(o?o.start:aS)}" aria-label="${esc(r.name)} start"><span class="dt">to</span><input type="date" value="${esc(o?o.end:aE)}" aria-label="${esc(r.name)} end">${adj?`<button type="button" class="rm" data-reset aria-label="Use the automatic dates for this step" title="Use automatic dates">↺</button>`:''}</div></div>`;
+      }
+    });
+    box.innerHTML = h;
+  }
+  function showSec(sec){
+    S.sec = sec;
+    document.querySelectorAll('[data-sec]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.sec===sec));
+    document.querySelectorAll('[data-secbox]').forEach(b=>b.hidden = b.dataset.secbox!==sec);
+    renderEditorExtras();
+  }
+  // the job as it stands in the open window, including unsaved step dates and materials
+  function draftJob(){
+    const fj = formJob();
+    return {...fj, stepDates: S.stepEdit && !S.stepEdit.auto ? S.stepEdit.dates : null, materials:S.matEdit, balance:NaN};
+  }
+  function ownerSelect(j, x){
+    const m = (j.materials && j.materials[x.name]) || {};
+    const c = catalog().find(c=>c.name===x.name) || {};
+    const defName = c.owner==='@super' ? (superKey(j) ? `${superKey(j)} (supervisor)` : 'Job supervisor') : (personName(c.owner) || 'Unassigned');
+    return `<select data-mf="owner" aria-label="${esc(x.name)} owner"><option value="">Default: ${esc(defName)}</option><option value="@super"${m.owner==='@super'?' selected':''}>Job supervisor</option>${people().map(p=>`<option value="${esc(p.id)}"${m.owner===p.id?' selected':''}>${esc(p.name)}</option>`).join('')}</select>`;
+  }
+  function renderEditorExtras(){
+    if($('editor').hidden) return;
+    setTimeout(applyRO, 0);
+    const dj = draftJob();
+    // construction phases
+    const t = ctypeOf(dj), phases = phasesFor(dj);
+    let h = '<p class="calc-h">Construction phases</p>';
+    if(t && t.months>0) h += `<p class="fixed" style="margin:0 0 6px">Typical length for ${esc(t.name.toLowerCase())}: ${t.months} months. Phases stretch to this job's own construction length.</p>`;
+    if(!t) h += '<p class="fixed">Pick a construction type to lay out the phases and material order dates.</p>';
+    else if(!phases.length) h += `<p class="fixed">${dj.status==='design' ? 'Enter a production start and duration' : 'Enter months remaining and the as-of date'} to see phase dates.</p>`;
+    else h += phases.map(x=>`<div class="steprow"><span class="nm">${esc(x.name)}</span><span class="dt">${rangeTxt(x.s,x.e)}</span></div>`).join('');
+    if(t && dj.status!=='design' && !parseDate(dj.conStart)) h += '<p class="fixed" style="margin-top:8px">Add the date construction started so phases line up with where the job really is. Until then they start from the as-of date.</p>';
+    F('phases').innerHTML = `<div class="stepdates">${h}</div>`;
+    // materials
+    const mats = materialsFor(dj);
+    let m = '';
+    if(!t) m = '<p class="fixed">Pick a construction type on the Schedule tab to see which materials this job needs and when to order them.</p>';
+    else if(!mats.length) m = '<p class="fixed">This construction type has no materials set up.</p>';
+    else {
+      m = `<p class="fixed" style="margin:0 0 8px">Order-by dates use the long end of each lead time until you enter the lead time for the product the client picked. Each date includes a ${bufferW()}-week buffer. Set an item to Not needed to take it off this job's list.</p>
+      <div class="mtable"><table><thead><tr><th>Item</th><th>Owner</th><th>Needed on site</th><th>Lead, weeks</th><th>Status</th><th>Ordered</th><th>Promised</th><th>Order by</th></tr></thead><tbody>`;
+      mats.forEach(x=>{
+        const ord = x.kind!=='task' && (x.status==='ordered' || x.status==='delivered');
+        const skip = x.status==='skip';
+        m += `<tr data-item="${esc(x.name)}"${x.kind==='task'?' data-task="1"':''} class="${skip?'skip':x.flags.length?'warn':''}">
+          <td><b>${esc(x.name)}</b></td>
+          <td>${ownerSelect(dj, x)}</td>
+          <td>${x.need!=null?fmtDate(fromDayNum(x.need)):'–'}<span class="sub2">${esc(x.phase)}</span></td>
+          <td>${skip?'':x.kind==='task'?`<input data-mf="lead" type="number" min="0" step="0.5" value="${x.chosen!=null?esc(x.chosen):''}" placeholder="${x.lMax}" aria-label="${esc(x.name)} weeks before construction start"><span class="sub2">wk before start</span>`:`<input data-mf="lead" type="number" min="0" step="0.5" value="${x.chosen!=null?esc(x.chosen):''}" placeholder="${x.lMin===x.lMax?x.lMax:x.lMin+'–'+x.lMax}" aria-label="${esc(x.name)} lead time in weeks">`}</td>
+          <td><select data-mf="status" aria-label="${esc(x.name)} status">${Object.entries(statusSet(x)).map(([k,v])=>`<option value="${k}"${k===x.status?' selected':''}>${v}</option>`).join('')}</select></td>
+          <td>${ord?`<input data-mf="ordered" type="date" value="${esc(x.ordered)}" aria-label="${esc(x.name)} order date">`:''}</td>
+          <td>${ord?`<input data-mf="promised" type="date" value="${esc(x.promised)}" aria-label="${esc(x.name)} promised delivery">`:''}</td>
+          <td>${skip?'–':`<b>${x.orderBy!=null?fmtDate(fromDayNum(x.orderBy)):'–'}</b>${x.flags.map(f=>`<span class="flag">${esc(f)}</span>`).join('')}`}</td></tr>`;
+      });
+      m += '</tbody></table></div>';
+    }
+    F('mats').innerHTML = m;
+  }
+  function openEditor(id, sec='details'){
+    S.sel = id; S.confirmDel = false;
+    const j = id==='new' ? null : S.jobs.find(x=>x.id===id);
+    const sdv = j && j.stepDates && typeof j.stepDates==='object' ? j.stepDates : {};
+    S.stepEdit = { auto: !Object.keys(sdv).length, dates: JSON.parse(JSON.stringify(sdv)) };
+    S.matEdit = j && j.materials && typeof j.materials==='object' ? JSON.parse(JSON.stringify(j.materials)) : {};
+    F('ctype').innerHTML = `<option value="">Not set</option>` + ctypes().map(t=>`<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('');
+    F('ctype').value = j?.ctype && ctypes().some(t=>t.id===j.ctype) ? j.ctype : '';
+    F('constart').value = j?.conStart || '';
+    if(id!=='new' && !j){ closeEditor(); return; }
+    $('editor').hidden = false;
+    document.body.classList.add('editing');
+    $('editorTitle').textContent = j ? 'Edit job' : 'New job';
+    const fmtN = v => (num(v)>0 ? num(v).toLocaleString('en-US',{maximumFractionDigits:2}) : '');
+    F('name').value = j?.name || '';
+    F('super').value = j?.supervisor || '';
+    $('superList').innerHTML = [...new Set([...people().map(p=>p.name), ...supervisorNames()])].sort((a,b)=>a.localeCompare(b)).map(n=>`<option value="${esc(n)}"></option>`).join('');
+    F('revised').value = fmtN(j?.revised); F('invoiced').value = fmtN(j?.invoiced); F('value').value = fmtN(j?.valueComplete);
+    F('price').value = fmtN(j?.price); F('start').value = j?.start || '';
+    F('dur').value = j?.duration || ''; F('unit').value = j?.durUnit || 'weeks';
+    F('months').value = j?.months || '';
+    F('asof').value = j?.asof || iso(new Date());
+    F('delete').hidden = !j; F('delete').textContent = 'Delete job';
+    F('err').hidden = true;
+    setEditStatus(j?.status==='design' ? 'design' : (j ? 'active' : S.editStatus));
+    showSec(sec);
+    applyRO();
+    render();
+    if(sec==='details') F('name').focus();
+  }
+  function closeEditor(){ S.sel = null; $('editor').hidden = true; document.body.classList.remove('editing'); render(); }
+  function showErr(msg){ F('err').textContent = msg; F('err').hidden = false; }
+
+  function cleanMats(src){
+    const mats = {};
+    Object.entries(src||{}).forEach(([k,v])=>{ if(!v) return; const c = {};
+      if(STATUS[v.status] && v.status!=='none') c.status = v.status;
+      if(parseFloat(v.lead)>0) c.lead = parseFloat(v.lead);
+      if(parseDate(v.ordered)) c.ordered = v.ordered; if(parseDate(v.promised)) c.promised = v.promised;
+      if(v.owner) c.owner = v.owner;
+      if(Object.keys(c).length) mats[k] = c; });
+    return mats;
+  }
+  async function saveJob(e){
+    e.preventDefault();
+    if(!isAdmin()){
+      // Ordering level: only the job's materials are saved
+      if(S.sel==='new') return closeEditor();
+      F('save').disabled = true;
+      try{ await S.db.collection('jobs').doc(S.sel).update({materials: cleanMats(S.matEdit)}); closeEditor(); }
+      catch(err){ showErr(err && err.code==='invalid_argument' ? "Your access level can change materials only." : "Couldn't save. Try again."); }
+      finally{ F('save').disabled = false; }
+      return;
+    }
+    const fj = formJob();
+    if(!fj.name) return showErr('Give the job a name.');
+    if(fj.status==='design' && !schedule(fj)) return showErr('Enter a sell price, production start and duration.');
+    if(fj.status!=='design'){
+      if(!(fj.revised>0) || !(fj.months>0) || !parseDate(fj.asof)) return showErr('Enter the revised contract, months remaining and the as-of date.');
+      if(activeCalc(fj).balance < 0) return showErr('Amount invoiced is more than the revised contract.');
+    }
+    const body = { name:fj.name, status:fj.status, updatedAt:new Date().toISOString() };
+    if(fj.ctype) body.ctype = fj.ctype;
+    if(fj.status!=='design' && parseDate(fj.conStart)) body.conStart = fj.conStart;
+    const mats = {};
+    Object.entries(S.matEdit||{}).forEach(([k,v])=>{ if(!v) return; const c = {};
+      if(STATUS[v.status] && v.status!=='none') c.status = v.status;
+      if(parseFloat(v.lead)>0) c.lead = parseFloat(v.lead);
+      if(parseDate(v.ordered)) c.ordered = v.ordered; if(parseDate(v.promised)) c.promised = v.promised;
+      if(v.owner) c.owner = v.owner;
+      if(Object.keys(c).length) mats[k] = c; });
+    if(Object.keys(mats).length) body.materials = mats;
+    if(fj.supervisor) body.supervisor = fj.supervisor;
+    if(fj.status==='design'){
+      Object.assign(body,{price:fj.price,start:fj.start,duration:fj.duration,durUnit:fj.durUnit});
+      if(S.stepEdit && !S.stepEdit.auto){
+        const auto = jobPlan({...fj, stepDates:null}, false) || [];
+        const keep = {};
+        Object.entries(S.stepEdit.dates).forEach(([n,o])=>{
+          const a = auto.find(r=>r.name===n); if(!a || !parseDate(o.start) || !parseDate(o.end)) return;
+          if(parseDate(o.end) < parseDate(o.start)) return;
+          if(o.start !== iso(fromDayNum(a.s)) || o.end !== iso(fromDayNum(a.e-1))) keep[n] = {start:o.start, end:o.end};
+        });
+        if(Object.keys(keep).length) body.stepDates = keep;
+      }
+    }
+    else {
+      const c = activeCalc(fj);
+      Object.assign(body,{revised:fj.revised, invoiced:fj.invoiced||0, valueComplete:fj.valueComplete||0, months:fj.months, asof:fj.asof, balance:c.balance, ctc:c.ctc});
+    }
+    const prev = S.jobs.find(x=>x.id===S.sel);
+    if(prev && prev.included===false && fj.status==='design') body.included = false;
+    const isNew = S.sel==='new';
+    const id = isNew ? 'j'+Date.now().toString(36)+Math.random().toString(36).slice(2,6) : S.sel;
+    F('save').disabled = true;
+    try{
+      if(S.db){ await S.db.collection('jobs').doc(id).set(body); }
+      else { const i = S.jobs.findIndex(x=>x.id===id); if(i>=0) S.jobs[i] = {id,...body}; else S.jobs.push({id,...body}); }
+      S.editStatus = fj.status;
+      closeEditor();
+    }catch(err){
+      showErr(err && err.code==='invalid_argument' ? "You don't have permission to change jobs on this page." : err && err.code==='quota_exceeded' ? 'Storage for this page is full. Delete old jobs to make room.' : "Couldn't save the job. Try again.");
+    }finally{ F('save').disabled = false; }
+  }
+  async function deleteJob(){
+    if(!isAdmin()) return;
+    if(!S.confirmDel){ S.confirmDel = true; F('delete').textContent = 'Click again to delete'; return; }
+    const id = S.sel;
+    try{
+      if(S.db) await S.db.collection('jobs').doc(id).delete();
+      else S.jobs = S.jobs.filter(x=>x.id!==id);
+      closeEditor();
+    }catch(err){ showErr("Couldn't delete the job. Try again."); }
+  }
+
+  // ---------- wiring ----------
+  $('addJob').addEventListener('click',()=>{ if(isAdmin()) openEditor('new'); });
+  $('editor').addEventListener('submit', saveJob);
+  F('cancel').addEventListener('click', closeEditor);
+  F('delete').addEventListener('click', deleteJob);
+  document.querySelectorAll('[data-status]').forEach(b=>b.addEventListener('click',()=>setEditStatus(b.dataset.status)));
+  $('editor').querySelectorAll('input,select').forEach(i=>i.addEventListener('input',()=>{ F('err').hidden = true; preview(); }));
+  ['start','dur','unit'].forEach(id=>F(id).addEventListener('change', renderStepFields));
+  document.querySelectorAll('[data-sec]').forEach(b=>b.addEventListener('click',()=>showSec(b.dataset.sec)));
+  $('editor').addEventListener('change', e=>{ if(!e.target.closest('#f-mats')) renderEditorExtras(); });
+  F('ctype').addEventListener('change', ()=>{
+    const t = ctypes().find(x=>x.id===F('ctype').value);
+    if(t && t.months>0 && S.editStatus==='design' && !(parseFloat(F('dur').value)>0)){ F('dur').value = t.months; F('unit').value = 'months'; renderStepFields(); preview(); renderEditorExtras(); }
+  });
+  F('mats').addEventListener('change', e=>{
+    const tr = e.target.closest('[data-item]'), f = e.target.dataset.mf; if(!tr || !f) return;
+    const k = tr.dataset.item, m = S.matEdit[k] = S.matEdit[k] || {};
+    m[f] = e.target.value;
+    if(f==='lead' && parseFloat(m.lead)>0 && (!m.status || m.status==='none') && !tr.dataset.task) m.status = 'selected';
+    if(f==='status' && (m.status==='ordered' || m.status==='delivered') && !m.ordered) m.ordered = iso(new Date());
+    renderEditorExtras();
+  });
+  $('modalBack').addEventListener('click', ()=>closeEditor());
+  F('steps').addEventListener('change', e=>{
+    if(e.target.id==='f-auto'){
+      S.stepEdit.auto = e.target.checked;
+      if(S.stepEdit.auto) S.stepEdit.dates = {};
+      renderStepFields(); preview(); return;
+    }
+    const row = e.target.closest('[data-step]'); if(!row) return;
+    const [a,b] = row.querySelectorAll('input[type=date]');
+    const name = row.dataset.step;
+    const auto = (jobPlan({...formJob(), stepDates:null}, false) || []).filter(r=>r.dept!==PROD);
+    const idx = auto.findIndex(r=>r.name===name); if(idx<0) return;
+    // current dates for a step (end inclusive): its override if it has one, otherwise automatic
+    const cur = n => { const o = S.stepEdit.dates[n], r = auto.find(x=>x.name===n);
+      return (o && parseDate(o.start) && parseDate(o.end)) ? {s:dayNum(parseDate(o.start)), e:dayNum(parseDate(o.end))} : {s:r.s, e:r.e-1}; };
+    const put = (n,s0,e0) => { S.stepEdit.dates[n] = {start:iso(fromDayNum(s0)), end:iso(fromDayNum(e0))}; };
+    if(e.target===a){
+      // moving a step's start moves the whole step, and every step before it, by the same amount
+      if(!parseDate(a.value)) return;
+      const delta = dayNum(parseDate(a.value)) - cur(name).s;
+      if(delta){ for(let i=0;i<=idx;i++){ const c = cur(auto[i].name); put(auto[i].name, c.s+delta, c.e+delta); } }
+    } else {
+      // changing the end only changes this step's length
+      if(!parseDate(b.value)) return;
+      const c = cur(name), e0 = dayNum(parseDate(b.value));
+      put(name, c.s, Math.max(c.s, e0));
+    }
+    renderStepFields(); preview();
+  });
+  F('steps').addEventListener('click', e=>{
+    const r = e.target.closest('[data-reset]'); if(!r) return;
+    delete S.stepEdit.dates[r.closest('[data-step]').dataset.step];
+    renderStepFields(); preview();
+  });
+  ['price','revised','invoiced','value'].forEach(id=>F(id).addEventListener('blur',()=>{ const v=num(F(id).value); if(v>0) F(id).value=v.toLocaleString('en-US',{maximumFractionDigits:2}); }));
+  document.querySelectorAll('[data-period]').forEach(b=>b.addEventListener('click',()=>{
+    S.period = b.dataset.period;
+    document.querySelectorAll('[data-period]').forEach(x=>x.setAttribute('aria-pressed', x===b));
+    render();
+  }));
+  $('table').addEventListener('click', async e=>{
+    const b = e.target.closest('[data-toggle]'); if(!b || !isAdmin()) return;
+    const id = b.dataset.toggle, j = S.jobs.find(x=>x.id===id); if(!j) return;
+    const on = j.included === false; // flipping: currently off -> on
+    j.included = on; render();
+    if(S.db){
+      try{ await S.db.collection('jobs').doc(id).update({included:on}); }
+      catch(err){ j.included = !on; render(); $('saveStatus').textContent = "Couldn't save that change. Try again."; }
+    }
+  });
+  document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{
+    S.tab = b.dataset.tab; S._scrolledFor = null;
+    document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-pressed', x===b));
+    render();
+  }));
+  document.querySelectorAll('[data-sview]').forEach(b=>b.addEventListener('click',()=>{
+    S.sview = b.dataset.sview; S._scrolledFor = null;
+    document.querySelectorAll('[data-sview]').forEach(x=>x.setAttribute('aria-pressed', x===b));
+    render();
+  }));
+  document.querySelectorAll('[data-zoom]').forEach(b=>b.addEventListener('click',()=>{
+    S.zoom = b.dataset.zoom;
+    document.querySelectorAll('[data-zoom]').forEach(x=>x.setAttribute('aria-pressed', x===b));
+    render();
+  }));
+  function setFocus(on){
+    document.body.classList.toggle('focus', on);
+    $('focusBtn').textContent = on ? 'Exit full screen' : 'Full screen';
+    try{ if(on && document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); if(!on && document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }catch(e){}
+    render();
+  }
+  $('table').addEventListener('dblclick', e=>{
+    const th = e.target.closest('[data-job]'); if(!th) return;
+    e.preventDefault(); openEditor(th.dataset.job);
+  });
+  $('deptPick').addEventListener('change', e=>{ S.deptView = e.target.value; render(); });
+  // ---------- drag a board cell up or down to move it by whole weeks ----------
+  // Construction moves the production start; a design step moves that step and every step before it.
+  function cascadeDates(j, name, deltaDays, resize=false){
+    const auto = (jobPlan({...j, stepDates:null}, false) || []).filter(r=>r.dept!==PROD);
+    const idx = auto.findIndex(r=>r.name===name); if(idx<0) return j.stepDates || {};
+    const cur0 = j.stepDates && typeof j.stepDates==='object' ? j.stepDates : {};
+    const out = JSON.parse(JSON.stringify(cur0));
+    const cur = n => { const o = cur0[n], r = auto.find(x=>x.name===n);
+      return (o && parseDate(o.start) && parseDate(o.end)) ? {s:dayNum(parseDate(o.start)), e:dayNum(parseDate(o.end))} : {s:r.s, e:r.e-1}; };
+    if(resize){
+      // move only the step's start edge (its end stays put); earlier steps shift with it to stay linked
+      const me = cur(name), eff = Math.min(deltaDays, me.e - me.s);
+      for(let i=0;i<idx;i++){ const c = cur(auto[i].name); out[auto[i].name] = {start:iso(fromDayNum(c.s+eff)), end:iso(fromDayNum(c.e+eff))}; }
+      out[name] = {start:iso(fromDayNum(me.s+eff)), end:iso(fromDayNum(me.e))};
+    } else {
+      for(let i=0;i<=idx;i++){ const c = cur(auto[i].name); out[auto[i].name] = {start:iso(fromDayNum(c.s+deltaDays)), end:iso(fromDayNum(c.e+deltaDays))}; }
+    }
+    // keep only steps that differ from their automatic dates
+    Object.keys(out).forEach(n=>{ const a = auto.find(r=>r.name===n); if(a && out[n].start===iso(fromDayNum(a.s)) && out[n].end===iso(fromDayNum(a.e-1))) delete out[n]; });
+    return out;
+  }
+  const constWeeks = j => j.durUnit==='months' ? monthsToWeeks(parseFloat(j.duration)) : Math.max(1, Math.round(parseFloat(j.duration)));
+  function movedJob(j, step, weeks, mode='move'){
+    if(mode==='resize'){
+      if(step==='Construction') return {...j, duration: Math.max(1, constWeeks(j)+weeks), durUnit:'weeks'};
+      return {...j, stepDates: cascadeDates(j, step, 7*weeks, true)};
+    }
+    if(step==='Construction') return {...j, start: iso(addDays(parseDate(j.start), 7*weeks))};
+    return {...j, stepDates: cascadeDates(j, step, 7*weeks)};
+  }
+  function dragTipText(d){
+    const pj = d.preview || d.orig, plan = jobPlan(pj) || [];
+    const r = plan.find(x=>x.name===d.step);
+    if(d.mode==='resize' && r){
+      const days = r.e - r.s, len = days % 7 === 0 ? `${days/7} week${days===7?'':'s'}` : `${days} day${days===1?'':'s'}`;
+      const r0 = (jobPlan(d.orig)||[]).find(x=>x.name===d.step), d0 = r0 ? r0.e - r0.s : days;
+      const was = days!==d0 ? ` (was ${d0%7===0 ? d0/7+' wk' : d0+' days'})` : '';
+      return `${d.step}: ${len}${was}`;
+    }
+    const when = r ? fmtDate(fromDayNum(r.s)) : '';
+    const w = d.delta ? ` (${d.delta>0?'+':'−'}${Math.abs(d.delta)} wk)` : '';
+    return `${d.step==='Construction'?'Construction':d.step} starts ${when}${w}`;
+  }
+  $('tableWrap').addEventListener('mousedown', e=>{
+    const td = isAdmin() ? e.target.closest('td[data-drag]') : null;
+    if(!td || e.button!==0) return;
+    const j = S.jobs.find(x=>x.id===td.dataset.job); if(!j) return;
+    e.preventDefault();
+    S.drag = {mode: e.altKey ? 'resize' : 'move', id:j.id, step:td.dataset.drag, y0:e.clientY, rowH:td.offsetHeight||22, delta:0, orig:j, preview:null,
+      order:[...$('table').querySelectorAll('th[data-job]')].map(th=>th.dataset.job)};
+    document.body.classList.add('moving');
+    const tip = $('dragTip'); tip.hidden = false; tip.textContent = dragTipText(S.drag);
+    tip.style.left = (e.clientX+14)+'px'; tip.style.top = (e.clientY+14)+'px';
+  });
+  window.addEventListener('mousemove', e=>{
+    const d = S.drag; if(!d) return;
+    const tip = $('dragTip'); tip.style.left = (e.clientX+14)+'px'; tip.style.top = (e.clientY+14)+'px';
+    const delta = Math.round((e.clientY - d.y0) / d.rowH);
+    if(delta === d.delta) return;
+    d.delta = delta; d.preview = delta ? movedJob(d.orig, d.step, delta, d.mode) : null;
+    tip.textContent = dragTipText(d);
+    renderSchedule();
+  });
+  function endDrag(commit){
+    const d = S.drag; if(!d) return;
+    S.drag = null; $('dragTip').hidden = true; document.body.classList.remove('moving');
+    if(!commit || !d.delta){ renderSchedule(); return; }
+    const upd = movedJob(d.orig, d.step, d.delta, d.mode);
+    let fields, undo;
+    if(d.step==='Construction' && d.mode==='resize'){ fields = {duration:upd.duration, durUnit:upd.durUnit}; undo = {duration:d.orig.duration, durUnit:d.orig.durUnit}; }
+    else if(d.step==='Construction'){ fields = {start:upd.start}; undo = {start:d.orig.start}; }
+    else { fields = {stepDates:upd.stepDates}; undo = {stepDates:d.orig.stepDates||{}}; }
+    applyJobFields(d.id, fields);
+    showToast(`${esc(d.orig.name||'Job')}: ${esc(dragTipText({...d, preview:upd}))}.`, ()=>applyJobFields(d.id, undo));
+  }
+  window.addEventListener('mouseup', ()=>endDrag(true));
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && S.drag){ e.stopImmediatePropagation(); endDrag(false); } }, true);
+  async function applyJobFields(id, fields){
+    const j = S.jobs.find(x=>x.id===id); if(!j) return;
+    const before = {}; Object.keys(fields).forEach(k=>before[k]=j[k]);
+    Object.assign(j, fields); render();
+    if(S.db){
+      try{ await S.db.collection('jobs').doc(id).update(fields); }
+      catch(err){ Object.assign(j, before); render(); showToast("Couldn't save that move. Try again."); }
+    }
+  }
+  let toastT;
+  function showToast(html, undoFn){
+    const t = $('toast');
+    t.innerHTML = `<span>${html}</span>` + (undoFn ? `<button type="button" id="toastUndo">Undo</button>` : '');
+    t.hidden = false; clearTimeout(toastT);
+    if(undoFn) $('toastUndo').onclick = ()=>{ undoFn(); t.hidden = true; };
+    toastT = setTimeout(()=>{ t.hidden = true; }, 8000);
+  }
+  $('ownerPick').addEventListener('change', e=>{ S.owner = e.target.value; render(); });
+  $('msort').addEventListener('change', e=>{ S.msort = e.target.value; S.mdir = 1; render(); });
+  document.querySelectorAll('[data-mview]').forEach(b=>b.addEventListener('click',()=>{ S.matView = b.dataset.mview; document.querySelectorAll('[data-mview]').forEach(x=>x.setAttribute('aria-pressed', x===b)); render(); }));
+  document.querySelectorAll('[data-mdate]').forEach(b=>b.addEventListener('click',()=>{ S.matDate = b.dataset.mdate; document.querySelectorAll('[data-mdate]').forEach(x=>x.setAttribute('aria-pressed', x===b)); render(); }));
+  $('boardSort').addEventListener('change', e=>{ S.boardSort = e.target.value; render(); });
+  $('focusBtn').addEventListener('click',()=>setFocus(!document.body.classList.contains('focus')));
+  document.addEventListener('keydown', e=>{
+    if(e.key!=='Escape') return;
+    if(document.body.classList.contains('editing')){ closeEditor(); return; }
+    if(document.body.classList.contains('focus')) setFocus(false);
+  });
+  document.addEventListener('fullscreenchange', ()=>{ if(!document.fullscreenElement && document.body.classList.contains('focus')) setFocus(false); });
+  // click-and-drag to pan the board
+  (()=>{
+    const tw = $('tableWrap'); let d = null;
+    tw.addEventListener('mousedown', e=>{
+      if(!tw.classList.contains('tall') || e.button!==0 || e.target.closest('button,a,input,select,[data-drag]')) return;
+      d = {x:e.clientX, y:e.clientY, l:tw.scrollLeft, t:tw.scrollTop, moved:false};
+    });
+    window.addEventListener('mousemove', e=>{
+      if(!d) return;
+      const dx = e.clientX-d.x, dy = e.clientY-d.y;
+      if(!d.moved && Math.abs(dx)+Math.abs(dy) < 4) return;
+      d.moved = true; tw.classList.add('dragging');
+      tw.scrollLeft = d.l - dx; tw.scrollTop = d.t - dy; e.preventDefault();
+    });
+    window.addEventListener('mouseup', ()=>{ d = null; tw.classList.remove('dragging'); });
+  })();
+  $('showDesign').addEventListener('change', e=>{ S.showDesign = e.target.checked; render(); });
+  let rt; if('ResizeObserver' in window) new ResizeObserver(()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(S.tab==='billing') renderChart(aggregate()); },100); }).observe($('tableWrap'));
+
+  renderTplEditor();
+  renderCtEditor();
+  renderPeopleEditor();
+  render();
+
+  // ---------- storage: Supabase ----------
+  const SUPABASE_URL = 'https://enukninnuqctyywsfqkz.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_BPNuq70bfpn0nXrsB5Ik3g_TngUoJtU';
+
+  // A small adapter so the app keeps using the same calls it always has (collection/doc, set/update/delete, onSnapshot)
+  function makeDb(sb){
+    const jobs = new Map(), settings = new Map(), jobSubs = [], setSubs = {};
+    const jobDocs = () => [...jobs.entries()].map(([id,data])=>({id, exists:true, data:()=>data}));
+    const emitJobs = () => jobSubs.forEach(f=>f({docs:jobDocs()}));
+    const emitSet = id => { const v = settings.get(id); (setSubs[id]||[]).forEach(f=>f({exists:v!=null, data:()=>v})); };
+    const fail = e => { const err = new Error(e && e.message || 'Request failed'); err.code = (e && /row-level security|permission|only admins/i.test(e.message||'')) ? 'invalid_argument' : 'failed'; return err; };
+    async function loadAll(){
+      const [a,b] = await Promise.all([ sb.from('fc_jobs').select('id,data'), sb.from('fc_settings').select('id,data') ]);
+      if(a.error) throw fail(a.error); if(b.error) throw fail(b.error);
+      jobs.clear(); a.data.forEach(r=>jobs.set(r.id, r.data));
+      settings.clear(); b.data.forEach(r=>settings.set(r.id, r.data));
+    }
+    const ready = loadAll();
+    sb.channel('fc-live')
+      .on('postgres_changes', {event:'*', schema:'public', table:'fc_jobs'}, p=>{ if(p.eventType==='DELETE') jobs.delete(p.old.id); else jobs.set(p.new.id, p.new.data); emitJobs(); })
+      .on('postgres_changes', {event:'*', schema:'public', table:'fc_settings'}, p=>{ const id = p.eventType==='DELETE' ? p.old.id : p.new.id; if(p.eventType==='DELETE') settings.delete(id); else settings.set(id, p.new.data); emitSet(id); })
+      .subscribe();
+    // catch anything missed while the tab was in the background
+    document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') loadAll().then(()=>{ emitJobs(); Object.keys(setSubs).forEach(emitSet); }).catch(()=>{}); });
+    const clean = o => JSON.parse(JSON.stringify(o));
+    const settingsDoc = id => ({
+      onSnapshot(cb, err){ (setSubs[id] = setSubs[id] || []).push(cb); ready.then(()=>cb({exists:settings.has(id), data:()=>settings.get(id)})).catch(e=>err && err(e)); },
+      async set(data){ const d = clean(data); const r = await sb.from('fc_settings').upsert({id, data:d}); if(r.error) throw fail(r.error); settings.set(id, d); emitSet(id); },
+    });
+    return {
+      doc(path){ return settingsDoc(path.split('/')[1]); },
+      collection(){ return {
+        onSnapshot(cb, err){ jobSubs.push(cb); ready.then(()=>cb({docs:jobDocs()})).catch(e=>err && err(e)); },
+        doc(id){ return {
+          async set(data){ const d = clean(data);
+            const r = jobs.has(id) ? await sb.from('fc_jobs').update({data:d}).eq('id', id).select('id') : await sb.from('fc_jobs').insert({id, data:d}).select('id');
+            if(r.error) throw fail(r.error); if(!r.data || !r.data.length) throw fail({message:'permission'}); jobs.set(id, d); emitJobs(); },
+          async update(fields){ const d = clean({...(jobs.get(id)||{}), ...fields});
+            const r = await sb.from('fc_jobs').update({data:d}).eq('id', id).select('id');
+            if(r.error) throw fail(r.error); if(!r.data || !r.data.length) throw fail({message:'permission'}); jobs.set(id, d); emitJobs(); },
+          async delete(){ const r = await sb.from('fc_jobs').delete().eq('id', id); if(r.error) throw fail(r.error); jobs.delete(id); emitJobs(); },
+        }; },
+      }; },
+    };
+  }
+
+  function startData(db, email){
+    S.db = db; S.myEmail = email;
+    db.doc('settings/people').onSnapshot(d=>{
+      const v = d.exists ? d.data() : null;
+      S.people = v && Array.isArray(v.people) ? v.people : null;
+      // open straight to the signed-in person's list
+      const me = people().find(p=>(p.email||'').toLowerCase()===email.toLowerCase());
+      if(me && S.me!==me.id){ S.me = me.id; try{ localStorage.setItem('fc_me', me.id); }catch(e){} }
+      if(!S.peopleDirty){ S.peopleDraft = null; renderPeopleEditor(); }
+      renderCtEditor(); render(); renderEditorExtras();
+    }, ()=>{});
+    db.doc('settings/construction').onSnapshot(d=>{
+      const v = d.exists ? d.data() : null;
+      S.ctypes = v && Array.isArray(v.ctypes) ? v.ctypes : null;
+      S.catalog = v && Array.isArray(v.catalog) ? v.catalog : null;
+      S.bufferW = v && isFinite(parseFloat(v.bufferWeeks)) ? parseFloat(v.bufferWeeks) : null;
+      if(!S.ctDirty){ S.ctDraft = null; renderCtEditor(); }
+      render(); renderEditorExtras();
+    }, ()=>{});
+    db.doc('settings/schedule').onSnapshot(d=>{
+      const st = d.exists && d.data() && Array.isArray(d.data().steps) ? d.data().steps : null;
+      S.template = st; if(!S.tplDirty) renderTplEditor(); render();
+    }, ()=>{});
+    db.collection('jobs').onSnapshot(snap=>{
+      S.jobs = snap.docs.filter(d=>d.exists).map(d=>({id:d.id, ...d.data()}));
+      S.storage = 'db';
+      if(S.sel && S.sel!=='new' && !S.jobs.find(j=>j.id===S.sel)) { S.sel=null; $('editor').hidden=true; document.body.classList.remove('editing'); }
+      render();
+    }, ()=>{ S.db = null; S.storage = 'memory'; render(); });
+  }
+
+  // ---------- sign-in ----------
+  (async()=>{
+    const showAuth = step => { $('auth').hidden = false; ['authStep1','authStep2','authDenied'].forEach(id=>$(id).hidden = id!==step); $('authErr').hidden = true; };
+    const authErr = m => { $('authErr').textContent = m; $('authErr').hidden = false; };
+    if(!window.supabase || SUPABASE_KEY.startsWith('PASTE')){ S.storage = 'memory'; render(); showAuth('authStep1'); authErr('This copy of the app isn’t connected to the database yet.'); return; }
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true } });
+    let started = false, checking = false;
+    async function onSession(session){
+      if(!session){ showAuth('authStep1'); $('signOut').hidden = true; $('whoami').textContent = ''; return; }
+      if(started || checking) return; checking = true;
+      const email = session.user.email || '';
+      // members only: the member list is readable only by people on it
+      const m = await sb.from('fc_members').select('email,role').ilike('email', email).limit(1);
+      checking = false;
+      if(m.error || !m.data || !m.data.length){ $('authDeniedEmail').textContent = email; showAuth('authDenied'); return; }
+      S.role = m.data[0].role === 'admin' ? 'admin' : 'ordering'; S.sb = sb;
+      document.body.classList.toggle('ro', S.role!=='admin');
+      $('auth').hidden = true; $('signOut').hidden = false; $('whoami').textContent = `${email} (${S.role==='admin'?'Admin':'Ordering'})`;
+      if(S.role==='admin') loadMembers();
+      started = true; startData(makeDb(sb), email);
+    }
+    $('authSend').addEventListener('click', async ()=>{
+      const email = $('authEmail').value.trim();
+      if(!/^\S+@\S+\.\S+$/.test(email)) return authErr('Enter a valid email address.');
+      $('authSend').disabled = true;
+      const redirect = /^https?:/.test(location.protocol) ? location.href.split('#')[0] : undefined;
+      const r = await sb.auth.signInWithOtp({ email, options:{ shouldCreateUser:true, emailRedirectTo: redirect } });
+      $('authSend').disabled = false;
+      if(r.error) return authErr(/rate|seconds/i.test(r.error.message) ? 'Too many tries. Wait a minute and try again.' : 'Couldn’t send the code. Check the email address and try again.');
+      showAuth('authStep2'); $('authCode').focus();
+    });
+    $('authEmail').addEventListener('keydown', e=>{ if(e.key==='Enter') $('authSend').click(); });
+    $('authVerify').addEventListener('click', async ()=>{
+      const email = $('authEmail').value.trim(), token = $('authCode').value.replace(/\s/g,'');
+      if(!token) return authErr('Enter the code from the email.');
+      $('authVerify').disabled = true;
+      const r = await sb.auth.verifyOtp({ email, token, type:'email' });
+      $('authVerify').disabled = false;
+      if(r.error) return authErr('That code didn’t work. Check it, or send a new one.');
+    });
+    $('authCode').addEventListener('keydown', e=>{ if(e.key==='Enter') $('authVerify').click(); });
+    $('authBack').addEventListener('click', ()=>showAuth('authStep1'));
+    const out = async ()=>{ await sb.auth.signOut(); try{ localStorage.removeItem('fc_me'); }catch(e){} location.reload(); };
+    $('signOut').addEventListener('click', out); $('authDeniedOut').addEventListener('click', out);
+    sb.auth.onAuthStateChange((evt, session)=>{ setTimeout(()=>onSession(session), 0); });
+  })();
+})();
+</script>
+</body>
+</html>
