@@ -166,6 +166,10 @@ th.bd-h:hover{background:var(--now)}
 body.ro #addJob, body.ro #peopleBox, body.ro #ctBox, body.ro #tplBox{display:none!important}
 body.ro .sw{pointer-events:none;opacity:.6}
 body.ro td[data-drag]{cursor:default}
+#tplEditor td.ord{white-space:nowrap}
+#tplEditor .mv{border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:4px;width:26px;height:26px;padding:0;margin-right:3px;cursor:pointer;font-size:11px;line-height:1}
+#tplEditor .mv:disabled{opacity:.3;cursor:default}
+#tplEditor input[type=color]{width:42px;height:30px;padding:2px;vertical-align:middle;cursor:pointer}
 td[data-drag]{cursor:ns-resize}
 body.moving, body.moving *{cursor:ns-resize!important;user-select:none}
 #dragTip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;font-weight:500;padding:5px 9px;border-radius:5px;white-space:nowrap}
@@ -825,7 +829,7 @@ td.job{padding-left:18px}
         h += `<tr class="sub jobhead"><td title="${esc(j.name||'')}"><span class="mk ${j.status==='design'?'dsg':'a'}"></span>${esc(j.name||'Untitled job')}${sup?` <span class="cnt">${esc(sup)}</span>`:''}</td>${sd.periods.map(k=>`<td class="${nowc(k)}"></td>`).join('')}<td class="tot dates">${rangeTxt(plan[0].s, plan[plan.length-1].e)}</td></tr>`;
         plan.forEach((r,i)=>{
           h += `<tr${i===plan.length-1?' class="grp-end"':''}><td class="job" title="${esc(r.name+' ('+r.dept+')')}">${esc(r.name)}</td>`;
-          h += sd.periods.map(k=>overlaps(r,k) ? `<td class="b${nowc(k)}" title="${esc(r.name+': '+rangeTxt(r.s,r.e))}"><span class="bar ${deptClass(r.dept)}"></span></td>` : `<td class="b${nowc(k)}"></td>`).join('');
+          h += sd.periods.map(k=>overlaps(r,k) ? `<td class="b${nowc(k)}" title="${esc(r.name+': '+rangeTxt(r.s,r.e))}"><span class="bar ${deptClass(r.dept)}"${customColor(r)?` style="background:${customColor(r)}"`:''}></span></td>` : `<td class="b${nowc(k)}"></td>`).join('');
           h += `<td class="tot dates">${rangeTxt(r.s,r.e)}</td></tr>`;
         });
       });
@@ -878,7 +882,11 @@ td.job{padding-left:18px}
   const inkFor = hex => { const [r,g,b] = [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255); return (0.299*r+0.587*g+0.114*b) > 0.6 ? '#1E272D' : '#FFFFFF'; };
   const mix = (a,b,t) => { const pa=[1,3,5].map(i=>parseInt(a.slice(i,i+2),16)), pb=[1,3,5].map(i=>parseInt(b.slice(i,i+2),16)); return '#'+pa.map((v,i)=>Math.round(v+(pb[i]-v)*t).toString(16).padStart(2,'0')).join(''); };
   // Design steps get their own shade of green, light to dark in step order; every other department one tint
-  function stepFill(r){
+  // colors an admin picked in Standard steps and durations win over the built-in palette
+  const prodFill = () => (S.prodColor && /^#[0-9a-f]{6}$/i.test(S.prodColor)) ? S.prodColor : PROD_FILL;
+  const customColor = r => { if(r.dept===PROD) return S.prodColor || null; const st = steps().find(x=>x.name===r.name); return st && /^#[0-9a-f]{6}$/i.test(st.color||'') ? st.color : null; };
+  function stepFill(r){ return customColor(r) || baseStepFill(r); }
+  function baseStepFill(r){
     if(r.dept===PROD) return PROD_FILL;
     if(r.dept.toLowerCase()==='design'){
       const ds = steps().filter(st=>(st.dept||'').trim().toLowerCase()==='design').map(st=>st.name);
@@ -893,6 +901,7 @@ td.job{padding-left:18px}
   // Steps within one department, in template order, and a shade for each (light to dark)
   const deptSteps = d => steps().filter(st=>((st.dept||'Other').trim()||'Other')===d).map(st=>st.name);
   function stepShade(r){
+    const cc = customColor(r); if(cc) return cc;
     if(r.dept===PROD) return PROD_FILL;
     if(r.dept.toLowerCase()==='design'){
       // distinct colors for design phases in the single-department view: yellow, orange, red, blue, then extras
@@ -908,15 +917,8 @@ td.job{padding-left:18px}
     const tw = $('tableWrap'), names = supervisorNames().map(n=>n.toLowerCase());
     const supColor = j => { const i = names.indexOf(superKey(j).toLowerCase()); return i<0 ? null : SUP_COLORS[i % SUP_COLORS.length]; };
     // legend: departments (design shown as its run of greens) and supervisor accents
-    const depts = deptOrder();
-    const designSteps = steps().filter(st=>(st.dept||'').trim().toLowerCase()==='design');
-    let leg = depts.map(d=>{
-      if(d.toLowerCase()==='design' && designSteps.length){
-        const g = designSteps.map(st=>stepFill({name:st.name, dept:st.dept.trim()}));
-        return `<span><span class="mk" style="width:2.2em;background:linear-gradient(90deg,${g.join(',')})"></span>${esc(d)}</span>`;
-      }
-      return `<span><span class="mk" style="background:${d===PROD?PROD_FILL:DEPT_TINTS[depts.indexOf(d)%DEPT_TINTS.length]}"></span>${esc(d)}</span>`;
-    }).join('');
+    let leg = steps().map(st=>`<span><span class="mk" style="background:${stepFill({name:st.name, dept:((st.dept||'Other').trim()||'Other')})}"></span>${esc(shortName(st.name))}</span>`).join('')
+      + `<span><span class="mk" style="background:${prodFill()}"></span>Construction</span>`;
     leg += supervisorNames().map(n=>`<span><span class="mk" style="width:.35em;border-radius:0;background:${SUP_COLORS[names.indexOf(n.toLowerCase())%SUP_COLORS.length]}"></span>${esc(n)}</span>`).join('');
     $('legDept').innerHTML = leg;
 
@@ -949,7 +951,7 @@ td.job{padding-left:18px}
           const label = k===firstWk ? `<b>${esc(superKey(j)||'No supervisor')}</b>` : k===secondWk ? `Const start ${fromDayNum(con.s).toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'2-digit'})}` : phStart.length ? `<span class="phl">${esc(phStart.join(' / '))}</span>` : '';
           const accent = c ? `border-left:6px solid ${c};` : 'border-left:6px dashed #9AA5AB;';
           const dc = j.status==='design' ? ` data-job="${esc(j.id)}" data-drag="Construction"` : '';
-          h += `<td class="bd fill con"${dc} style="background:${PROD_FILL};color:${inkFor(PROD_FILL)};${accent}" title="${esc((j.name||'')+': construction '+rangeTxt(con.s,con.e)+(superKey(j)?' ('+superKey(j)+')':''))}">${label}</td>`;
+          h += `<td class="bd fill con"${dc} style="background:${prodFill()};color:${inkFor(prodFill())};${accent}" title="${esc((j.name||'')+': construction '+rangeTxt(con.s,con.e)+(superKey(j)?' ('+superKey(j)+')':''))}">${label}</td>`;
         } else if(hit.length){
           const fills = hit.map(stepFill);
           const bg = fills.length===1 ? fills[0] : `linear-gradient(90deg,${fills.map((f,i)=>`${f} ${i/fills.length*100}%,${f} ${(i+1)/fills.length*100}%`).join(',')})`;
@@ -972,16 +974,19 @@ td.job{padding-left:18px}
     const rows = (S.tplDraft || steps()).map(x=>({...x}));
     S.tplDraft = rows;
     const depts = deptOrder();
-    let h = `<div class="inner"><datalist id="deptList">${depts.map(d=>`<option value="${esc(d)}"></option>`).join('')}</datalist><table><thead><tr><th>Step</th><th>Department</th><th>Duration</th><th></th><th>Alongside previous</th><th></th></tr></thead><tbody>`;
+    let h = `<div class="inner"><datalist id="deptList">${depts.map(d=>`<option value="${esc(d)}"></option>`).join('')}</datalist><table><thead><tr><th>Order</th><th>Step</th><th>Department</th><th>Duration</th><th></th><th>Alongside previous</th><th>Color</th><th></th></tr></thead><tbody>`;
     rows.forEach((r,i)=>{
-      h += `<tr data-i="${i}"><td><input data-f="name" value="${esc(r.name||'')}" aria-label="Step name"></td>
+      const cur = /^#[0-9a-f]{6}$/i.test(r.color||'') ? r.color : baseStepFill({name:r.name, dept:((r.dept||'Other').trim()||'Other')});
+      h += `<tr data-i="${i}"><td class="ord"><button type="button" class="mv" data-mv="-1" data-at="${i}"${i===0?' disabled':''} aria-label="Move ${esc(r.name||'step')} up">▲</button><button type="button" class="mv" data-mv="1" data-at="${i}"${i===rows.length-1?' disabled':''} aria-label="Move ${esc(r.name||'step')} down">▼</button></td><td><input data-f="name" value="${esc(r.name||'')}" aria-label="Step name"></td>
         <td><input data-f="dept" list="deptList" value="${esc(r.dept||'')}" aria-label="Department"></td>
         <td><input data-f="dur" type="number" min="1" step="1" value="${esc(r.dur||1)}" aria-label="Duration"></td>
         <td><select data-f="unit" aria-label="Unit"><option value="days"${r.unit==='days'?' selected':''}>days</option><option value="weeks"${r.unit!=='days'?' selected':''}>weeks</option></select></td>
         <td><input data-f="withPrev" type="checkbox"${r.withPrev?' checked':''}${i===0?' disabled':''} aria-label="Runs alongside previous step"></td>
+        <td><input data-f="color" type="color" value="${cur}" aria-label="${esc(r.name||'step')} color">${r.color?`<button type="button" class="rm" data-uncolor="${i}" title="Use the standard color" aria-label="Use the standard color for ${esc(r.name||'step')}">↺</button>`:''}</td>
         <td><button type="button" class="rm" data-rm="${i}" aria-label="Remove ${esc(r.name||'step')}">×</button></td></tr>`;
     });
-    h += `<tr><td colspan="6" class="fixed">Construction (Production) follows automatically, using each job's own duration.</td></tr></tbody></table>
+    const pc = (S.tplProd!==undefined ? S.tplProd : S.prodColor) || PROD_FILL;
+    h += `<tr><td></td><td colspan="5" class="fixed">Construction (Production) follows automatically, using each job's own duration.</td><td><input type="color" id="tplProdColor" value="${pc}" aria-label="Construction color"></td><td></td></tr></tbody></table>
       <div class="tplact"><button type="button" class="ghost" id="tplAdd">Add a step</button><button type="button" class="primary" id="tplSave" style="flex:none">Save steps</button><button type="button" class="ghost" id="tplReset">Undo changes</button><span class="fixed" id="tplMsg"></span></div></div>`;
     $('tplEditor').innerHTML = h;
   }
@@ -990,23 +995,33 @@ td.job{padding-left:18px}
       const r = S.tplDraft[+tr.dataset.i];
       tr.querySelectorAll('[data-f]').forEach(inp=>{
         const f = inp.dataset.f;
+        if(f==='color'){ if(inp.dataset.touched) r.color = inp.value; return; }
         r[f] = f==='withPrev' ? inp.checked : f==='dur' ? (parseFloat(inp.value)||1) : inp.value.trim();
       });
     });
   }
-  $('tplEditor').addEventListener('input', ()=>{ S.tplDirty = true; readTpl(); $('tplMsg').textContent = 'Unsaved changes'; });
+  $('tplEditor').addEventListener('input', e=>{ S.tplDirty = true; if(e.target.dataset && e.target.dataset.f==='color') e.target.dataset.touched = '1'; if(e.target.id==='tplProdColor') S.tplProd = e.target.value; readTpl(); $('tplMsg').textContent = 'Unsaved changes'; });
   $('tplEditor').addEventListener('click', async e=>{
+    const mv = e.target.closest('[data-mv]');
+    if(mv){ readTpl(); const i = +mv.dataset.at, j = i + (+mv.dataset.mv);
+      if(j>=0 && j<S.tplDraft.length){ const [x] = S.tplDraft.splice(i,1); S.tplDraft.splice(j,0,x); if(S.tplDraft[0]) S.tplDraft[0].withPrev = false; S.tplDirty = true; renderTplEditor(); $('tplMsg').textContent='Unsaved changes';
+        const b = $('tplEditor').querySelector(`[data-mv="${mv.dataset.mv}"][data-at="${j}"]`) || $('tplEditor').querySelector(`[data-at="${j}"]`); if(b && !b.disabled) b.focus(); }
+      return; }
+    const unc = e.target.closest('[data-uncolor]');
+    if(unc){ readTpl(); delete S.tplDraft[+unc.dataset.uncolor].color; S.tplDirty = true; renderTplEditor(); $('tplMsg').textContent='Unsaved changes'; return; }
     const rm = e.target.closest('[data-rm]');
     if(rm){ readTpl(); S.tplDraft.splice(+rm.dataset.rm,1); if(S.tplDraft[0]) S.tplDraft[0].withPrev=false; S.tplDirty = true; renderTplEditor(); $('tplMsg').textContent='Unsaved changes'; return; }
     if(e.target.id==='tplAdd'){ readTpl(); S.tplDraft.push({name:'New step', dept:'', dur:1, unit:'weeks'}); S.tplDirty = true; renderTplEditor(); $('tplMsg').textContent='Unsaved changes'; return; }
-    if(e.target.id==='tplReset'){ S.tplDraft = null; S.tplDirty = false; renderTplEditor(); return; }
+    if(e.target.id==='tplReset'){ S.tplDraft = null; S.tplDirty = false; S.tplProd = undefined; renderTplEditor(); return; }
     if(e.target.id==='tplSave'){
       readTpl();
-      const clean = S.tplDraft.filter(r=>r.name).map((r,i)=>({name:r.name, dept:r.dept||'Other', dur:Math.max(1,r.dur||1), unit:r.unit==='days'?'days':'weeks', withPrev: i>0 && !!r.withPrev}));
+      const clean = S.tplDraft.filter(r=>r.name).map((r,i)=>{ const o = {name:r.name, dept:r.dept||'Other', dur:Math.max(1,r.dur||1), unit:r.unit==='days'?'days':'weeks', withPrev: i>0 && !!r.withPrev}; if(/^#[0-9a-f]{6}$/i.test(r.color||'')) o.color = r.color; return o; });
+      const prodColor = S.tplProd!==undefined ? S.tplProd : (S.prodColor||null);
       if(!clean.length){ $('tplMsg').textContent = 'Keep at least one step.'; return; }
       try{
-        if(S.db) await S.db.doc('settings/schedule').set({steps:clean});
-        S.template = clean; S.tplDraft = null; S.tplDirty = false; renderTplEditor(); render();
+        const doc = {steps:clean}; if(prodColor && prodColor.toLowerCase()!==PROD_FILL.toLowerCase()) doc.prodColor = prodColor;
+        if(S.db) await S.db.doc('settings/schedule').set(doc);
+        S.template = clean; S.prodColor = doc.prodColor || null; S.tplProd = undefined; S.tplDraft = null; S.tplDirty = false; renderTplEditor(); render();
         $('tplMsg').textContent = 'Saved';
       }catch(err){ $('tplMsg').textContent = "Couldn't save the steps. Try again."; }
     }
@@ -1879,7 +1894,8 @@ td.job{padding-left:18px}
     }, ()=>{});
     db.doc('settings/schedule').onSnapshot(d=>{
       const st = d.exists && d.data() && Array.isArray(d.data().steps) ? d.data().steps : null;
-      S.template = st; if(!S.tplDirty) renderTplEditor(); render();
+      S.template = st; S.prodColor = d.exists && d.data() && d.data().prodColor || null;
+      if(!S.tplDirty) renderTplEditor(); render();
     }, ()=>{});
     db.collection('jobs').onSnapshot(snap=>{
       S.jobs = snap.docs.filter(d=>d.exists).map(d=>({id:d.id, ...d.data()}));
