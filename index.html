@@ -217,6 +217,11 @@ td.bd.fill[data-zstep]:hover{filter:brightness(.97)}
 h2.ht{font-family:var(--cond);font-size:24px;margin:0}
 #homeTodos input[type=checkbox]{width:18px;height:18px;cursor:pointer}
 table.mytd td{text-align:left}
+.tk{display:block;margin-top:2px;font-size:11px;font-weight:600;color:#1E272D;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk.late,.tk.late .tkd{color:#C92A2A}
+.tkd{font-size:10px;margin-right:4px;color:#1E272D}
+td.bd:not(.fill) .tk{color:var(--ink)}
+td.bd:not(.fill) .tkd{color:var(--ink)}
 td[data-drag]{cursor:ns-resize}
 body.moving, body.moving *{cursor:ns-resize!important;user-select:none}
 #dragTip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;font-weight:500;padding:5px 9px;border-radius:5px;white-space:nowrap}
@@ -1024,6 +1029,19 @@ td.job{padding-left:18px}
     let leg = `<span class="legh">Show:</span>` + steps().map(st=>tog(st.name, stepFill({name:st.name, dept:((st.dept||'Other').trim()||'Other')}))).join('')
       + tog('Construction', prodFill())
       + (S.hidden.size ? `<button type="button" class="linkbtn" data-showall style="font-size:13px">Show all</button>` : '') + `<span class="legsep"></span>`;
+    {
+      const owners = new Map(); let unassigned = false;
+      S.jobs.forEach(j=>todosOf(j).forEach(t=>{ if(t.done) return; if(t.owner){ const n = (ownerOptions().find(o=>o.key===t.owner)||{}).name; if(n) owners.set(t.owner, n); } else unassigned = true; }));
+      if(owners.size || unassigned){
+        const tasksOn = !isHidden('@tasks');
+        leg += `<span class="legh">Tasks:</span><button type="button" class="legtog" data-hide="@tasks" aria-pressed="${tasksOn}"><span class="tkd">◆</span>${tasksOn?'On':'Off'}</button>`;
+        if(tasksOn){
+          leg += [...owners.entries()].sort((a,b)=>a[1].localeCompare(b[1])).map(([k,n])=>`<button type="button" class="legtog" data-hide="@who:${esc(k)}" aria-pressed="${!isHidden('@who:'+k)}" title="Show tasks for ${esc(n)}">${esc(n)}</button>`).join('');
+          if(unassigned) leg += `<button type="button" class="legtog" data-hide="@who:" aria-pressed="${!isHidden('@who:')}" title="Show tasks assigned to anyone">Anyone</button>`;
+        }
+        leg += `<span class="legsep"></span>`;
+      }
+    }
     leg += supervisorNames().map(n=>`<span><span class="mk" style="width:.35em;border-radius:0;background:${SUP_COLORS[names.indexOf(n.toLowerCase())%SUP_COLORS.length]}"></span>${esc(n)}</span>`).join('');
     $('legDept').innerHTML = leg;
 
@@ -1056,6 +1074,7 @@ td.job{padding-left:18px}
       h += `<tr class="${newMonth?'bd-month':''}${nowc?' curwk':''}${past}"><td class="bd-wk${nowc}" title="${nowc?'This week, ':''}week ending ${fmtDate(fri)}">${newMonth?`<b>${fmtShort(fri)}</b> <span class="bd-d">'${String(fri.getFullYear()).slice(2)}</span>`:`<span class="bd-d">${fmtShort(fri)}</span>`}${nowc?'<span class="nowdot"></span>':''}</td>`;
       jobs.forEach(({j,plan})=>{
         const hit = plan.filter(r=>overlaps(r,k,'week') && !isHidden(r.name));
+        const tk = taskMarks(j, k);
         const con = hit.find(r=>r.dept===PROD);
         if(con){
           const c = supColor(j), startK = wkOf(con.s), endK = wkOf(con.e-1);
@@ -1064,7 +1083,7 @@ td.job{padding-left:18px}
           const accent = c ? `box-shadow:inset 5px 0 0 ${c};` : 'box-shadow:inset 5px 0 0 #9AA5AB;';
           const top = k===startK ? `border-top:3px solid ${prodFill()};` : '';
           const dc = (j.status==='design' ? ` data-job="${esc(j.id)}" data-drag="Construction"` : '') + ` data-zjob="${esc(j.id)}" data-zstep="Construction"`;
-          h += `<td class="bd fill con${k===endK?' end':''}"${dc} style="background:${tint(prodFill())};color:${ink};${accent}${top}" title="${esc((j.name||'')+': construction '+rangeTxt(con.s,con.e)+(superKey(j)?' ('+superKey(j)+')':''))}">${label}</td>`;
+          h += `<td class="bd fill con${k===endK?' end':''}"${dc} style="background:${tint(prodFill())};color:${ink};${accent}${top}" title="${esc((j.name||'')+': construction '+rangeTxt(con.s,con.e)+(superKey(j)?' ('+superKey(j)+')':'')+tk.tip)}">${label}${tk.html}</td>`;
         } else if(hit.length){
           // one main step fills the cell; steps running alongside it are narrow stripes on the right edge
           // milestones (under a week, like Presentation or Signed) get a ◆ marker, not a fill;
@@ -1085,8 +1104,8 @@ td.job{padding-left:18px}
             + miles.map(r=>`<span class="mile" style="color:${stepFill(r)}">◆</span><span class="mtxt">${esc(shortName(r.name))}</span>`).join('')
             + side.filter(isStart).map(r=>`<span class="side"><i style="background:${stepFill(r)}"></i>+ ${esc(shortName(r.name))}</span>`).join('');
           const ds = (j.status==='design' ? ` data-job="${esc(j.id)}" data-drag="${esc(main.name)}"` : '') + ` data-zjob="${esc(j.id)}" data-zstep="${esc(main.name)}"`;
-          h += `<td class="bd fill${ending?' end':''}"${ds} style="background:${tint(stepFill(main))};color:${ink};${top}${stripes?`box-shadow:${stripes};padding-right:${side.length*9+6}px;`:''}" title="${esc(byStart.map(r=>(r===main?'':'Alongside: ')+r.name+' ('+r.dept+'): '+rangeTxt(r.s,r.e)).join('\n'))}">${lbl}</td>`;
-        } else h += `<td class="bd${nowc}"></td>`;
+          h += `<td class="bd fill${ending?' end':''}"${ds} style="background:${tint(stepFill(main))};color:${ink};${top}${stripes?`box-shadow:${stripes};padding-right:${side.length*9+6}px;`:''}" title="${esc(byStart.map(r=>(r===main?'':'Alongside: ')+r.name+' ('+r.dept+'): '+rangeTxt(r.s,r.e)).join('\n')+tk.tip)}">${lbl}${tk.html}</td>`;
+        } else h += `<td class="bd${nowc}"${tk.html?` title="${esc(tk.tip.trim())}"`:''}>${tk.html}</td>`;
       });
       h += `</tr>`;
     });
@@ -1507,6 +1526,21 @@ td.job{padding-left:18px}
   function todoBadge(j, step){
     const open = todosOf(j).filter(t=>t.step===step && !t.done).length;
     return open ? `<span class="tdb" title="${open} open to-do${open===1?'':'s'}">${open} to-do${open===1?'':'s'}</span>` : '';
+  }
+  // tasks due in one week of one job, as ◆ markers on the Board (respects the Tasks and person toggles)
+  function taskMarks(j, k){
+    if(isHidden('@tasks')) return {html:'', tip:''};
+    const today = dayNum(new Date());
+    // overdue tasks move up to this week's row so they stay visible; everything else sits in its own week
+    const nowK = P.week.idx(new Date());
+    const wkFor = t => { const d = dayNum(parseDate(t.date)); return d < today ? nowK : P.week.idx(parseDate(t.date)); };
+    const due = todosOf(j).filter(t=>!t.done && parseDate(t.date) && wkFor(t)===k && !isHidden('@who:'+(t.owner||'')));
+    if(!due.length) return {html:'', tip:''};
+    const who = t => t.owner ? ((ownerOptions().find(o=>o.key===t.owner)||{}).name || '') : '';
+    const late = due.some(t=>dayNum(parseDate(t.date)) < today);
+    const tip = '\n\nTasks due this week:\n' + due.map(t=>`◆ ${t.title} (${fmtShort(parseDate(t.date))}${who(t)?', '+who(t):''}, ${t.step})`).join('\n');
+    const text = due.length===1 ? (late ? 'Overdue: ' : '') + due[0].title : `${due.length} tasks${late?', overdue':''}`;
+    return {html:`<span class="tk${late?' late':''}"><span class="tkd">◆</span>${esc(text)}</span>`, tip};
   }
   function openZoom(jobId, step){
     if(S.panAt && Date.now()-S.panAt < 300) return;
