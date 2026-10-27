@@ -214,6 +214,9 @@ td.bd.fill[data-zstep]:hover{filter:brightness(.97)}
 .zempty{font-size:13px;color:var(--muted);padding:6px 0}
 .zout{font-size:12px;color:var(--muted);margin:14px 0 4px;font-weight:600}
 @media (max-width:640px){ .zform{grid-template-columns:1fr 1fr} .zt{grid-template-columns:auto minmax(0,1fr) auto} .zt .zdt,.zt select{grid-column:2} }
+h2.ht{font-family:var(--cond);font-size:24px;margin:0}
+#homeTodos input[type=checkbox]{width:18px;height:18px;cursor:pointer}
+table.mytd td{text-align:left}
 td[data-drag]{cursor:ns-resize}
 body.moving, body.moving *{cursor:ns-resize!important;user-select:none}
 #dragTip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;font-weight:500;padding:5px 9px;border-radius:5px;white-space:nowrap}
@@ -412,6 +415,7 @@ td.job{padding-left:18px}
     </div>
     <div class="chart" id="chart"></div>
     <div id="homePick" hidden></div>
+    <div id="homeTodos" hidden></div>
     <div class="tablewrap" id="tableWrap"><table id="table"></table></div>
     <p class="note" id="noteMats" hidden>Each job's construction type sets its phases, which stretch to fit the job's construction length, and which materials are needed at which phase. An item's order-by date is the date it's needed on site, minus its lead time, minus the buffer. Until a product is picked, the long end of the lead time is used. Click any row to open that job's materials.</p>
     <details class="tpl" id="peopleBox" hidden><summary>People</summary><div id="peopleEditor"></div></details>
@@ -1446,10 +1450,55 @@ td.job{padding-left:18px}
     }
     renderMaterials(true);
     const name = (opts.find(o=>o.key===S.me)||{}).name || '';
-    $('summary').innerHTML = ($('summary').innerHTML || '') + ` <button type="button" class="linkbtn" id="notMe">Not ${esc(name)}?</button>`;
-    if(!$('tableWrap').hidden) return;
-    $('summary').innerHTML = `Nothing on your list right now. <button type="button" class="linkbtn" id="notMe">Not ${esc(name)}?</button>`;
+    const td = renderMyTodos();
+    const matSummary = $('tableWrap').hidden ? '' : ($('summary').innerHTML || '');
+    const parts = [];
+    if(td.count) parts.push(`<b>${td.count}</b> to-do${td.count===1?'':'s'}${td.late?` (<b>${td.late}</b> overdue)`:''}`);
+    if(matSummary) parts.push(`Materials: ${matSummary}`);
+    $('summary').innerHTML = (parts.length ? parts.join('. ') + (/[.]$/.test(parts[parts.length-1])?'':'.') : 'Nothing on your list right now.') + ` <button type="button" class="linkbtn" id="notMe">Not ${esc(name)}?</button>`;
   }
+  // to-dos assigned to me, from every step on every job, in priority order
+  function renderMyTodos(){
+    const box = $('homeTodos');
+    const today = dayNum(new Date()), fri = P.week.idx(new Date());
+    const mine = [];
+    S.jobs.forEach(j=>todosOf(j).forEach(t=>{ if(t.owner===S.me && !t.done && parseDate(t.date)) mine.push({j, t, d:dayNum(parseDate(t.date))}); }));
+    mine.sort((a,b)=>a.d-b.d);
+    if(!mine.length){ box.hidden = true; box.innerHTML = ''; return {count:0, late:0}; }
+    const groups = [
+      ['Overdue', mine.filter(x=>x.d < today), 'late'],
+      ['This week', mine.filter(x=>x.d >= today && x.d <= fri), ''],
+      ['Next 4 weeks', mine.filter(x=>x.d > fri && x.d <= fri+28), ''],
+      ['Later', mine.filter(x=>x.d > fri+28), ''],
+    ];
+    let h = `<h2 class="ht">To-dos</h2><div class="tablewrap" style="margin-top:8px"><table class="mat mytd"><thead><tr><th style="width:36px"></th><th>To-do</th><th>Job</th><th>Step</th><th>Due</th></tr></thead><tbody>`;
+    groups.forEach(([label, list, cls])=>{
+      if(!list.length) return;
+      h += `<tr class="sub${cls?' '+cls:''}"><td colspan="5">${label} <span class="cnt">${list.length}</span></td></tr>`;
+      list.forEach(({j,t,d},i)=>{
+        h += `<tr class="mrow${i===list.length-1?' grp-end':''}${d<today?' tlate':''}" data-zj="${esc(j.id)}" data-zs="${esc(t.step)}" tabindex="0">
+          <td><input type="checkbox" data-mydone="${esc(t.id)}" data-job="${esc(j.id)}" aria-label="Mark ${esc(t.title)} done"></td>
+          <td><b>${esc(t.title)}</b></td><td>${esc(j.name||'Untitled job')}</td><td>${esc(t.step)}</td>
+          <td>${fmtDate(fromDayNum(d))}${d<today?' <span class="flag">Overdue</span>':''}</td></tr>`;
+      });
+    });
+    h += `</tbody></table></div>` + ($('tableWrap').hidden ? '' : `<h2 class="ht" style="margin-top:22px">Materials</h2>`);
+    box.innerHTML = h; box.hidden = false;
+    return {count:mine.length, late:mine.filter(x=>x.d<today).length};
+  }
+  $('homeTodos').addEventListener('change', e=>{
+    const cb = e.target.closest('[data-mydone]'); if(!cb) return;
+    const j = S.jobs.find(x=>x.id===cb.dataset.job); if(!j) return;
+    const before = todosOf(j).map(t=>({...t}));
+    const t = before.find(x=>x.id===cb.dataset.mydone);
+    applyJobFields(j.id, {todos: before.map(x=>x.id===cb.dataset.mydone ? {...x, done:true} : x)});
+    showToast(`Done: ${esc(t ? t.title : 'to-do')}.`, ()=>applyJobFields(j.id, {todos: before}));
+  });
+  $('homeTodos').addEventListener('click', e=>{
+    if(e.target.closest('input')) return;
+    const r = e.target.closest('[data-zj]'); if(r) openZoom(r.dataset.zj, r.dataset.zs);
+  });
+  $('homeTodos').addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.target.closest('input')){ const r = e.target.closest('[data-zj]'); if(r) openZoom(r.dataset.zj, r.dataset.zs); } });
   $('homePick').addEventListener('click', e=>{ const b = e.target.closest('[data-me]'); if(b) setMe(b.dataset.me); });
   $('summary').addEventListener('click', e=>{ if(e.target.id==='notMe') setMe(''); });
 
@@ -1559,7 +1608,7 @@ td.job{padding-left:18px}
     if(!sch) $('tableWrap').classList.remove('tall');
     if(!(sch && S.sview==='board')){ $('table').classList.remove('grid-fixed'); $('table').style.width = ''; }
     if(!mat && !home) $('table').classList.remove('mat');
-    $('homePick').hidden = true;
+    $('homePick').hidden = true; $('homeTodos').hidden = true;
     if(home){ $('chart').hidden = true; renderHome(); }
     else if(mat){ $('chart').hidden = true; renderMaterials(); }
     else if(sup){ $('chart').hidden = true; renderSupersSummary(ag); renderSupers(ag); }
