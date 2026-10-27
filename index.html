@@ -490,8 +490,7 @@ td.job{padding-left:18px}
     <div class="zadd">
       <p class="calc-h">Add a to-do</p>
       <div class="zform">
-        <input id="zTitleIn" list="zSugg" placeholder="Client meeting, internal review, submit to engineer…" aria-label="To-do">
-        <datalist id="zSugg"><option value="Client meeting"></option><option value="Internal review"></option><option value="Submit to engineer"></option><option value="Engineer comments back"></option><option value="Site visit"></option><option value="Present to client"></option><option value="Send to client for review"></option></datalist>
+        <input id="zTitleIn" type="text" autocomplete="off" placeholder="Type anything, like Client meeting or Submit to engineer" aria-label="To-do">
         <input id="zDateIn" type="date" aria-label="Date">
         <select id="zOwnerIn" aria-label="Who"></select>
         <button type="button" class="primary" id="zAdd">Add</button>
