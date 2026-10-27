@@ -113,16 +113,26 @@ td.dates{color:var(--muted);font-size:13px}
 .tpl .tplact{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
 .tpl .fixed{color:var(--muted);font-size:14px}
 .tablewrap.tall{max-height:78vh;overflow:auto}
-.tablewrap.tall thead th{position:sticky;top:0;z-index:2;background:var(--paper)}
-.tablewrap.tall thead th:first-child{z-index:3}
+.tablewrap.tall thead th{position:sticky;top:0;z-index:4;background:var(--paper)}
+.tablewrap.tall thead th:first-child{z-index:5}
 th.bd-h{text-align:left;color:var(--ink);font-weight:600;border-right:1px solid var(--rule);vertical-align:bottom}
 .bd-sup{display:block;font-weight:400;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
 td.bd-wk{font-size:13px}
 .bd-d{color:var(--muted);font-size:12px}
-tr.bd-month td{border-top:1px solid var(--ink)}
-td.bd{text-align:left;font-size:12px;padding:3px 7px;border-right:1px solid var(--rule);max-width:220px;overflow:hidden;text-overflow:ellipsis}
-td.bd.fill{font-weight:600;border-bottom-color:rgba(255,255,255,.3)}
-td.bd.con{border-bottom-color:transparent}
+tr.bd-month td.bd-wk{border-top:1px solid var(--ink)}
+td.bd{text-align:left;font-size:12px;padding:4px 8px;height:24px;border-right:3px solid var(--paper);border-bottom:1px solid color-mix(in srgb,var(--rule) 45%,transparent);max-width:220px;overflow:hidden;text-overflow:ellipsis}
+td.bd.fill{font-weight:500;border-bottom-color:transparent}
+td.bd.fill.end{border-bottom:3px solid var(--paper)}
+.slbl{display:inline-flex;align-items:center;gap:5px;font-weight:600;margin-right:8px}
+.slbl i{display:inline-block;width:8px;height:8px;border-radius:2px;flex:none}
+.mile{font-size:11px;margin-right:3px}
+.mtxt{font-size:11px;font-weight:600;margin-right:8px}
+.side{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;opacity:.85}
+.side i{display:inline-block;width:6px;height:10px;border-radius:1px;flex:none}
+.sub3{font-weight:400;opacity:.75;margin-left:6px;font-size:11px}
+tr.past td.bd{opacity:.42}
+tr.past td.bd-wk{color:var(--muted)}
+tr.bd-month td.bd:not(.fill){border-top:1px solid var(--rule)}
 .tx{background:none!important;font-weight:600}
 .tx.dp0{color:#4F7A5B} .tx.dp1{color:#7A58A6} .tx.dp2{color:#B0553A} .tx.dp3{color:#2F7F98} .tx.dp4{color:#3D5A73} .tx.dp5{color:#8C733A}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .tx.dp0{color:#8FC39C} :root:not([data-theme="light"]) .tx.dp1{color:#B79BDB} :root:not([data-theme="light"]) .tx.dp2{color:#E39A80} :root:not([data-theme="light"]) .tx.dp3{color:#7FC3D8} :root:not([data-theme="light"]) .tx.dp4{color:#9DB8D3} :root:not([data-theme="light"]) .tx.dp5{color:#D2B878} }
@@ -170,6 +180,40 @@ body.ro td[data-drag]{cursor:default}
 #tplEditor .mv{border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:4px;width:26px;height:26px;padding:0;margin-right:3px;cursor:pointer;font-size:11px;line-height:1}
 #tplEditor .mv:disabled{opacity:.3;cursor:default}
 #tplEditor input[type=color]{width:42px;height:30px;padding:2px;vertical-align:middle;cursor:pointer}
+.legtog{display:inline-flex;align-items:center;gap:4px;border:1px solid transparent;background:transparent;border-radius:12px;padding:2px 8px 2px 6px;font-size:14px;color:var(--ink);cursor:pointer}
+.legtog:hover{border-color:var(--rule)}
+.legtog[aria-pressed="false"]{color:var(--muted);text-decoration:line-through;opacity:.55}
+.legtog[aria-pressed="false"] .mk{background:var(--rule)!important}
+.legh{font-size:13px;font-weight:600;color:var(--muted)}
+.legsep{width:100%;height:0}
+td[data-zstep]{cursor:pointer}
+td.bd.fill[data-zstep]:hover{filter:brightness(.97)}
+.tdb{display:inline-block;margin-left:6px;padding:0 6px;border-radius:8px;background:rgba(30,39,45,.14);font-size:11px;font-weight:600}
+#zoomBack{position:fixed;inset:0;background:rgba(10,15,18,.45);z-index:36}
+#zoomBack[hidden],#zoom[hidden]{display:none}
+#zoom{position:fixed;z-index:37;top:50%;left:50%;transform:translate(-50%,-50%);width:min(720px,calc(100vw - 24px));max-height:calc(100vh - 32px);overflow:auto;background:var(--bg);border:1px solid var(--ink);border-radius:10px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+#zoom .zhead{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 22px 12px;border-bottom:1px solid var(--rule);background:var(--bg);border-top:6px solid var(--zc,var(--ink));border-radius:10px 10px 0 0}
+#zoom h2{margin:0;font-family:var(--cond);font-size:28px}
+.zjob{margin:0;font-size:14px;font-weight:600;color:var(--muted)}
+.zmeta{margin:2px 0 0;font-size:14px;color:var(--muted)}
+#zoom .zbody{padding:16px 22px 22px}
+.zadd{padding:12px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);margin-bottom:16px}
+.zform{display:grid;grid-template-columns:minmax(0,1fr) 150px 140px auto;gap:8px}
+.zform .primary{flex:none;padding:8px 16px}
+.zwk{display:grid;grid-template-columns:110px minmax(0,1fr);border-top:1px solid var(--rule)}
+.zwk.cur{background:color-mix(in srgb,var(--nowline) 7%,transparent)}
+.zwk .zd{padding:8px 0;font-size:13px;color:var(--muted)}
+.zwk.cur .zd{color:var(--nowline);font-weight:700}
+.zwk .zl{padding:4px 0;min-height:34px;border-left:5px solid var(--zc,var(--rule));padding-left:10px}
+.zwk.out .zl{border-left-color:var(--rule)}
+.zt{display:grid;grid-template-columns:auto minmax(0,1fr) 130px 120px auto;gap:8px;align-items:center;padding:4px 0}
+.zt input[type=checkbox]{width:18px;height:18px}
+.zt input,.zt select{padding:4px 6px;font-size:14px}
+.zt.done .ztt{text-decoration:line-through;color:var(--muted)}
+.zt.late .zdt{border-color:var(--load3);color:var(--load3)}
+.zempty{font-size:13px;color:var(--muted);padding:6px 0}
+.zout{font-size:12px;color:var(--muted);margin:14px 0 4px;font-weight:600}
+@media (max-width:640px){ .zform{grid-template-columns:1fr 1fr} .zt{grid-template-columns:auto minmax(0,1fr) auto} .zt .zdt,.zt select{grid-column:2} }
 td[data-drag]{cursor:ns-resize}
 body.moving, body.moving *{cursor:ns-resize!important;user-select:none}
 #dragTip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;font-weight:500;padding:5px 9px;border-radius:5px;white-space:nowrap}
@@ -242,6 +286,17 @@ th,td{padding:7px 12px;white-space:nowrap;text-align:right;border-bottom:1px sol
 th{font-weight:500;color:var(--muted);border-bottom:1px solid var(--ink)}
 th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--paper);border-right:1px solid var(--rule);z-index:1;max-width:220px;overflow:hidden;text-overflow:ellipsis}
 .now{background:var(--now)}
+/* current week: a bold band across the whole Board row, lifted with a shadow */
+:root{--nowline:#E03131}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--nowline:#FF6B6B} }
+:root[data-theme="dark"]{--nowline:#FF6B6B}
+tr.curwk td{position:relative;z-index:1;box-shadow:inset 0 3px 0 var(--nowline), inset 0 -3px 0 var(--nowline), 0 6px 10px -4px rgba(0,0,0,.35), 0 -6px 10px -4px rgba(0,0,0,.35)}
+tr.curwk td:first-child{z-index:3;font-weight:700;color:var(--ink)}
+.nowdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--nowline);margin-left:6px;vertical-align:1px}
+.nowtag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:8px;background:var(--nowline);color:#fff;font-size:11px;font-weight:700;vertical-align:1px}
+/* current week, month or quarter in the other timelines: a bold column */
+td.now, th.now{box-shadow:inset 3px 0 0 var(--nowline), inset -3px 0 0 var(--nowline)}
+th.now{color:var(--nowline);font-weight:700}
 tr.sub td{font-weight:600}
 tr.sub td:first-child .mk{margin-right:6px}
 tr.grand td{font-weight:600;border-top:1px solid var(--ink);border-bottom:0}
@@ -263,10 +318,18 @@ td.job{padding-left:18px}
   <div class="authcard">
     <p class="authbrand">TR Design Build</p>
     <h1 style="font-size:34px">Sign in</h1>
-    <div id="authStep1">
-      <p class="fixed" style="font-size:15px;margin:0 0 14px">Enter your work email and we'll send you a sign-in code.</p>
-      <div class="field"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="name@company.com"></div>
+    <form id="authPw" autocomplete="on">
+      <p class="fixed" style="font-size:15px;margin:0 0 14px">Sign in with your work email and password.</p>
+      <div class="field"><label for="authEmail">Email</label><input id="authEmail" name="email" type="email" autocomplete="username" placeholder="name@company.com"></div>
+      <div class="field"><label for="authPass">Password</label><input id="authPass" name="password" type="password" autocomplete="current-password"></div>
+      <button type="submit" class="primary" id="authLogin" style="width:100%">Sign in</button>
+      <button type="button" class="linkbtn" id="authUseCode" style="margin:14px 0 0">First time, or forgot your password? Email me a code</button>
+    </form>
+    <div id="authStep1" hidden>
+      <p class="fixed" style="font-size:15px;margin:0 0 14px">We'll email you a 6-digit sign-in code.</p>
+      <div class="field"><label for="authEmail2">Email</label><input id="authEmail2" type="email" autocomplete="email" placeholder="name@company.com"></div>
       <button type="button" class="primary" id="authSend" style="width:100%">Email me a code</button>
+      <button type="button" class="linkbtn" id="authToPw" style="margin:14px 0 0">Sign in with a password instead</button>
     </div>
     <div id="authStep2" hidden>
       <p class="fixed" style="font-size:15px;margin:0 0 14px">Check your email. Type the code here, or click the link in the email.</p>
@@ -274,6 +337,14 @@ td.job{padding-left:18px}
       <button type="button" class="primary" id="authVerify" style="width:100%">Sign in</button>
       <button type="button" class="linkbtn" id="authBack" style="margin:12px 0 0">Use a different email</button>
     </div>
+    <form id="authSetPw" hidden autocomplete="on">
+      <p style="font-size:15px;margin:0 0 6px"><b>Set a password</b></p>
+      <p class="fixed" style="font-size:14px;margin:0 0 14px">Next time, sign in with your email and this password instead of waiting for a code. Your browser can save it for you.</p>
+      <input id="authSetUser" name="email" type="email" autocomplete="username" hidden>
+      <div class="field"><label for="authNewPass">New password (at least 8 characters)</label><input id="authNewPass" name="new-password" type="password" autocomplete="new-password"></div>
+      <button type="submit" class="primary" id="authSavePw" style="width:100%">Save password</button>
+      <button type="button" class="linkbtn" id="authSkipPw" style="margin:12px 0 0">Skip for now</button>
+    </form>
     <div id="authDenied" hidden>
       <p style="font-size:15px">You're signed in as <b id="authDeniedEmail"></b>, but that email isn't on the team list yet. Ask Todd to add it, then sign in again.</p>
       <button type="button" class="ghost" id="authDeniedOut">Sign out</button>
@@ -412,6 +483,24 @@ td.job{padding-left:18px}
     <button type="submit" class="primary" id="f-save">Save job</button>
   </div>
 </form>
+<div id="zoomBack" hidden></div>
+<section id="zoom" hidden role="dialog" aria-modal="true" aria-labelledby="zTitle">
+  <div class="zhead"><div><p class="zjob" id="zJob"></p><h2 id="zTitle"></h2><p class="zmeta" id="zMeta"></p></div><button type="button" class="ghost" id="zClose">Close</button></div>
+  <div class="zbody">
+    <div class="zadd">
+      <p class="calc-h">Add a to-do</p>
+      <div class="zform">
+        <input id="zTitleIn" list="zSugg" placeholder="Client meeting, internal review, submit to engineer…" aria-label="To-do">
+        <datalist id="zSugg"><option value="Client meeting"></option><option value="Internal review"></option><option value="Submit to engineer"></option><option value="Engineer comments back"></option><option value="Site visit"></option><option value="Present to client"></option><option value="Send to client for review"></option></datalist>
+        <input id="zDateIn" type="date" aria-label="Date">
+        <select id="zOwnerIn" aria-label="Who"></select>
+        <button type="button" class="primary" id="zAdd">Add</button>
+      </div>
+      <p class="formerr" id="zErr" hidden></p>
+    </div>
+    <div id="zWeeks"></div>
+  </div>
+</section>
 <div id="dragTip" hidden></div>
 <div id="toast" role="status" hidden></div>
 <script>
@@ -433,7 +522,7 @@ td.job{padding-left:18px}
   const monthsToWeeks = m => Math.max(1, Math.round(m*52/12));
   const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  const S = { msort:'order', mdir:1, owner:'all', matView:'urgency', matDate:'order', people:null, sec:'details', matEdit:{}, deptView:'Design', boardSort:'first', zoom:'m', sview:'job', template:null, tab:'home', me:(()=>{ try{ return localStorage.getItem('fc_me') || ''; }catch(e){ return ''; } })(), jobs:[], db:null, storage:'loading', sel:null, editStatus:'active', period:'week', showDesign:true, confirmDel:false };
+  const S = { hidden:new Set((()=>{ try{ return JSON.parse(localStorage.getItem('fc_hidden')||'[]'); }catch(e){ return []; } })()), msort:'order', mdir:1, owner:'all', matView:'urgency', matDate:'order', people:null, sec:'details', matEdit:{}, deptView:'Design', boardSort:'first', zoom:'m', sview:'job', template:null, tab:'home', me:(()=>{ try{ return localStorage.getItem('fc_me') || ''; }catch(e){ return ''; } })(), jobs:[], db:null, storage:'loading', sel:null, editStatus:'active', period:'week', showDesign:true, confirmDel:false };
 
   function split(total, n){
     const cents = Math.round(total*100), each = Math.floor(cents/n), out = [];
@@ -807,7 +896,9 @@ td.job{padding-left:18px}
 
   function renderSchedule(){
     const depts = deptOrder();
-    $('legDept').innerHTML = depts.map(d=>`<span><span class="mk ${deptClass(d)}"></span>${esc(d)}</span>`).join('');
+    $('legDept').innerHTML = S.sview==='job'
+      ? `<span class="legh">Show:</span>` + steps().map(st=>`<button type="button" class="legtog" data-hide="${esc(st.name)}" aria-pressed="${!isHidden(st.name)}"><span class="mk" style="background:${stepFill({name:st.name, dept:((st.dept||'Other').trim()||'Other')})}"></span>${esc(shortName(st.name))}</button>`).join('') + `<button type="button" class="legtog" data-hide="Construction" aria-pressed="${!isHidden('Construction')}"><span class="mk" style="background:${prodFill()}"></span>Construction</button>` + (S.hidden.size ? `<button type="button" class="linkbtn" data-showall style="font-size:13px">Show all</button>` : '')
+      : depts.map(d=>`<span><span class="mk ${deptClass(d)}"></span>${esc(d)}</span>`).join('');
     if(S.deptView!=='all' && !depts.includes(S.deptView)) S.deptView = depts[0];
     $('deptPick').innerHTML = depts.map(d=>`<option value="${esc(d)}"${d===S.deptView?' selected':''}>${esc(d)}</option>`).join('') + `<option value="all"${S.deptView==='all'?' selected':''}>All departments</option>`;
     const board = S.sview==='board';
@@ -827,9 +918,10 @@ td.job{padding-left:18px}
       sd.jobs.sort((a,b)=>a.plan[0].s-b.plan[0].s).forEach(({j,plan})=>{
         const sup = superKey(j);
         h += `<tr class="sub jobhead"><td title="${esc(j.name||'')}"><span class="mk ${j.status==='design'?'dsg':'a'}"></span>${esc(j.name||'Untitled job')}${sup?` <span class="cnt">${esc(sup)}</span>`:''}</td>${sd.periods.map(k=>`<td class="${nowc(k)}"></td>`).join('')}<td class="tot dates">${rangeTxt(plan[0].s, plan[plan.length-1].e)}</td></tr>`;
-        plan.forEach((r,i)=>{
-          h += `<tr${i===plan.length-1?' class="grp-end"':''}><td class="job" title="${esc(r.name+' ('+r.dept+')')}">${esc(r.name)}</td>`;
-          h += sd.periods.map(k=>overlaps(r,k) ? `<td class="b${nowc(k)}" title="${esc(r.name+': '+rangeTxt(r.s,r.e))}"><span class="bar ${deptClass(r.dept)}"${customColor(r)?` style="background:${customColor(r)}"`:''}></span></td>` : `<td class="b${nowc(k)}"></td>`).join('');
+        const vis = plan.filter(r=>!isHidden(r.name));
+        vis.forEach((r,i)=>{
+          h += `<tr${i===vis.length-1?' class="grp-end"':''}><td class="job" title="${esc(r.name+' ('+r.dept+')')}">${esc(r.name)}</td>`;
+          h += sd.periods.map(k=>overlaps(r,k) ? `<td class="b${nowc(k)}" title="${esc(r.name+': '+rangeTxt(r.s,r.e))}"><span class="bar" style="background:${stepFill(r)}"></span></td>` : `<td class="b${nowc(k)}"></td>`).join('');
           h += `<td class="tot dates">${rangeTxt(r.s,r.e)}</td></tr>`;
         });
       });
@@ -876,9 +968,9 @@ td.job{padding-left:18px}
   // Supervisor accent colors (kept away from the production blue)
   const SUP_COLORS = ['#E8833A','#C0392B','#E0B400','#8E44AD','#27AE60','#E84393','#16A085','#6D4C41','#D35400','#2C3E50'];
   const PROD_FILL = '#2F6FC9';
-  const DEPT_TINTS = ['#3E9B4F','#8352C4','#8B5E3C','#1597AE','#C0417A','#6B7B8C'];
+  const DEPT_TINTS = ['#3E9B4F','#8352C4','#8B5E3C','#D49A1C','#C0417A','#6B7B8C'];
   // Design phases each get a distinct color, in step order
-  const DESIGN_COLORS = ['#F2C230','#F08A24','#D9372B','#2BA3D9','#3E9B4F','#8352C4'];
+  const DESIGN_COLORS = ['#D9C23A','#7CBF4A','#2EA37A','#138E94','#0E6E73','#4C6FB5'];
   const inkFor = hex => { const [r,g,b] = [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255); return (0.299*r+0.587*g+0.114*b) > 0.6 ? '#1E272D' : '#FFFFFF'; };
   const mix = (a,b,t) => { const pa=[1,3,5].map(i=>parseInt(a.slice(i,i+2),16)), pb=[1,3,5].map(i=>parseInt(b.slice(i,i+2),16)); return '#'+pa.map((v,i)=>Math.round(v+(pb[i]-v)*t).toString(16).padStart(2,'0')).join(''); };
   // Design steps get their own shade of green, light to dark in step order; every other department one tint
@@ -886,8 +978,16 @@ td.job{padding-left:18px}
   const prodFill = () => (S.prodColor && /^#[0-9a-f]{6}$/i.test(S.prodColor)) ? S.prodColor : PROD_FILL;
   const customColor = r => { if(r.dept===PROD) return S.prodColor || null; const st = steps().find(x=>x.name===r.name); return st && /^#[0-9a-f]{6}$/i.test(st.color||'') ? st.color : null; };
   function stepFill(r){ return customColor(r) || baseStepFill(r); }
+  // one smooth ramp from the first step to production: warm sand -> green -> teal -> production blue
+  const RAMP = ['#E3B95B','#A9C46A','#5DB083','#2E9C9E','#2A86BE','#2F6FC9'];
+  function rampAt(t){
+    t = Math.max(0, Math.min(1, t)); const seg = (RAMP.length-1)*t, i = Math.min(RAMP.length-2, Math.floor(seg));
+    return mix(RAMP[i], RAMP[i+1], seg - i);
+  }
   function baseStepFill(r){
     if(r.dept===PROD) return PROD_FILL;
+    const list = steps(), i = list.findIndex(x=>x.name===r.name);
+    if(i>=0) return rampAt(i / list.length);
     if(r.dept.toLowerCase()==='design'){
       const ds = steps().filter(st=>(st.dept||'').trim().toLowerCase()==='design').map(st=>st.name);
       const i = Math.max(0, ds.indexOf(r.name)), n = ds.length;
@@ -917,8 +1017,10 @@ td.job{padding-left:18px}
     const tw = $('tableWrap'), names = supervisorNames().map(n=>n.toLowerCase());
     const supColor = j => { const i = names.indexOf(superKey(j).toLowerCase()); return i<0 ? null : SUP_COLORS[i % SUP_COLORS.length]; };
     // legend: departments (design shown as its run of greens) and supervisor accents
-    let leg = steps().map(st=>`<span><span class="mk" style="background:${stepFill({name:st.name, dept:((st.dept||'Other').trim()||'Other')})}"></span>${esc(shortName(st.name))}</span>`).join('')
-      + `<span><span class="mk" style="background:${prodFill()}"></span>Construction</span>`;
+    const tog = (name, color) => `<button type="button" class="legtog" data-hide="${esc(name)}" aria-pressed="${!isHidden(name)}" title="${isHidden(name)?'Show':'Hide'} ${esc(name)}"><span class="mk" style="background:${color}"></span>${esc(shortName(name))}</button>`;
+    let leg = `<span class="legh">Show:</span>` + steps().map(st=>tog(st.name, stepFill({name:st.name, dept:((st.dept||'Other').trim()||'Other')}))).join('')
+      + tog('Construction', prodFill())
+      + (S.hidden.size ? `<button type="button" class="linkbtn" data-showall style="font-size:13px">Show all</button>` : '') + `<span class="legsep"></span>`;
     leg += supervisorNames().map(n=>`<span><span class="mk" style="width:.35em;border-radius:0;background:${SUP_COLORS[names.indexOf(n.toLowerCase())%SUP_COLORS.length]}"></span>${esc(n)}</span>`).join('');
     $('legDept').innerHTML = leg;
 
@@ -937,26 +1039,50 @@ td.job{padding-left:18px}
     let h = `<thead><tr><th class="bd-wk" style="width:${wkW}px">Week</th>${jobs.map(({j})=>{ const c = supColor(j);
       return `<th class="bd-h" data-job="${esc(j.id)}" title="${esc((j.name||'')+(superKey(j)?' ('+superKey(j)+')':'')+' (double-click to edit)')}" style="width:${colW}px${c?`;border-top:4px solid ${c}`:''}">${esc(j.name||'Untitled job')}${superKey(j)?`<span class="bd-sup">${esc(superKey(j))}</span>`:''}</th>`; }).join('')}</tr></thead><tbody>`;
     let lastMonth = -1;
+    // calm board: soft tints, a label only in the week a step starts, steps drawn as one continuous block, past weeks faded
+    const dark = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme!=='light';
+    const tint = c => mix(c, dark ? '#1D2428' : '#FFFFFF', dark ? 0.45 : 0.62);
+    const ink = dark ? '#E6EAEB' : '#1E272D';
+    const firstK = sd.periods[0];
+    const wkOf = d => P.week.idx(fromDayNum(d));
     sd.periods.forEach(k=>{
       const fri = fromDayNum(k), newMonth = fri.getMonth()!==lastMonth;
       lastMonth = fri.getMonth();
       const nowc = k===sd.now ? ' now' : '';
-      h += `<tr class="${newMonth?'bd-month':''}"><td class="bd-wk${nowc}">${newMonth?`<b>${MON[fri.getMonth()]} '${String(fri.getFullYear()).slice(2)}</b> `:''}<span class="bd-d">${fmtShort(fri)}</span></td>`;
+      const past = k < sd.now ? ' past' : '';
+      h += `<tr class="${newMonth?'bd-month':''}${nowc?' curwk':''}${past}"><td class="bd-wk${nowc}" title="${nowc?'This week, ':''}week ending ${fmtDate(fri)}">${newMonth?`<b>${fmtShort(fri)}</b> <span class="bd-d">'${String(fri.getFullYear()).slice(2)}</span>`:`<span class="bd-d">${fmtShort(fri)}</span>`}${nowc?'<span class="nowdot"></span>':''}</td>`;
       jobs.forEach(({j,plan})=>{
-        const hit = plan.filter(r=>overlaps(r,k,'week'));
+        const hit = plan.filter(r=>overlaps(r,k,'week') && !isHidden(r.name));
         const con = hit.find(r=>r.dept===PROD);
         if(con){
-          const firstWk = P.week.idx(fromDayNum(con.s)), secondWk = firstWk + 7, c = supColor(j);
-          const phStart = phasesFor(j).filter(x=>P.week.idx(fromDayNum(x.s))===k).map(x=>shortName(x.name));
-          const label = k===firstWk ? `<b>${esc(superKey(j)||'No supervisor')}</b>` : k===secondWk ? `Const start ${fromDayNum(con.s).toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'2-digit'})}` : phStart.length ? `<span class="phl">${esc(phStart.join(' / '))}</span>` : '';
-          const accent = c ? `border-left:6px solid ${c};` : 'border-left:6px dashed #9AA5AB;';
-          const dc = j.status==='design' ? ` data-job="${esc(j.id)}" data-drag="Construction"` : '';
-          h += `<td class="bd fill con"${dc} style="background:${prodFill()};color:${inkFor(prodFill())};${accent}" title="${esc((j.name||'')+': construction '+rangeTxt(con.s,con.e)+(superKey(j)?' ('+superKey(j)+')':''))}">${label}</td>`;
+          const c = supColor(j), startK = wkOf(con.s), endK = wkOf(con.e-1);
+          const phStart = phasesFor(j).filter(x=>wkOf(x.s)===k && k!==startK).map(x=>shortName(x.name));
+          const label = (k===startK || k===firstK) ? `<b>${esc(superKey(j)||'No supervisor')}</b><span class="sub3">Start ${fromDayNum(con.s).toLocaleDateString('en-US',{month:'numeric',day:'numeric'})}</span>${todoBadge(j,'Construction')}` : phStart.length ? `<span class="phl">${esc(phStart.join(' · '))}</span>` : '';
+          const accent = c ? `box-shadow:inset 5px 0 0 ${c};` : 'box-shadow:inset 5px 0 0 #9AA5AB;';
+          const top = k===startK ? `border-top:3px solid ${prodFill()};` : '';
+          const dc = (j.status==='design' ? ` data-job="${esc(j.id)}" data-drag="Construction"` : '') + ` data-zjob="${esc(j.id)}" data-zstep="Construction"`;
+          h += `<td class="bd fill con${k===endK?' end':''}"${dc} style="background:${tint(prodFill())};color:${ink};${accent}${top}" title="${esc((j.name||'')+': construction '+rangeTxt(con.s,con.e)+(superKey(j)?' ('+superKey(j)+')':''))}">${label}</td>`;
         } else if(hit.length){
-          const fills = hit.map(stepFill);
-          const bg = fills.length===1 ? fills[0] : `linear-gradient(90deg,${fills.map((f,i)=>`${f} ${i/fills.length*100}%,${f} ${(i+1)/fills.length*100}%`).join(',')})`;
-          const ds = j.status==='design' ? ` data-job="${esc(j.id)}" data-drag="${esc(hit[hit.length-1].name)}"` : '';
-          h += `<td class="bd fill"${ds} style="background:${bg};color:${inkFor(fills[0])}" title="${esc(hit.map(r=>r.name+' ('+r.dept+'): '+rangeTxt(r.s,r.e)).join('\n'))}">${hit.map(r=>esc(shortName(r.name))).join(' / ')}</td>`;
+          // one main step fills the cell; steps running alongside it are narrow stripes on the right edge
+          // milestones (under a week, like Presentation or Signed) get a ◆ marker, not a fill;
+          // the main fill is the step underway at the end of the week; parallel steps are stripes
+          const isSide = r => !!(steps().find(x=>x.name===r.name)||{}).withPrev;
+          const isMile = r => (r.e - r.s) < 7;
+          const byStart = hit.slice().sort((x,y)=>x.s-y.s);
+          const long = byStart.filter(r=>!isMile(r));
+          const mains = long.filter(r=>!isSide(r));
+          const main = mains.length ? mains[mains.length-1] : long.length ? long[long.length-1] : byStart[byStart.length-1];
+          const side = long.filter(r=>r!==main && (isSide(r) || wkOf(r.e-1)>k));
+          const miles = byStart.filter(r=>isMile(r) && r!==main);
+          const stripes = side.map((r,i)=>`inset -${(i+1)*9}px 0 0 ${mix(stepFill(r), dark?'#1D2428':'#FFFFFF', 0.2)}`).join(',');
+          const isStart = r => wkOf(r.s)===k || k===firstK;
+          const ending = [main, ...side].every(r=>wkOf(r.e-1)===k) && !hit.some(r=>wkOf(r.e-1)>k && r!==main && !side.includes(r));
+          const top = isStart(main) ? `border-top:3px solid ${stepFill(main)};` : '';
+          const lbl = (isStart(main) ? `<span class="slbl"><i style="background:${stepFill(main)}"></i>${esc(shortName(main.name))}</span>${todoBadge(j,main.name)}` : '')
+            + miles.map(r=>`<span class="mile" style="color:${stepFill(r)}">◆</span><span class="mtxt">${esc(shortName(r.name))}</span>`).join('')
+            + side.filter(isStart).map(r=>`<span class="side"><i style="background:${stepFill(r)}"></i>+ ${esc(shortName(r.name))}</span>`).join('');
+          const ds = (j.status==='design' ? ` data-job="${esc(j.id)}" data-drag="${esc(main.name)}"` : '') + ` data-zjob="${esc(j.id)}" data-zstep="${esc(main.name)}"`;
+          h += `<td class="bd fill${ending?' end':''}"${ds} style="background:${tint(stepFill(main))};color:${ink};${top}${stripes?`box-shadow:${stripes};padding-right:${side.length*9+6}px;`:''}" title="${esc(byStart.map(r=>(r===main?'':'Alongside: ')+r.name+' ('+r.dept+'): '+rangeTxt(r.s,r.e)).join('\n'))}">${lbl}</td>`;
         } else h += `<td class="bd${nowc}"></td>`;
       });
       h += `</tr>`;
@@ -1328,7 +1454,93 @@ td.job{padding-left:18px}
   $('homePick').addEventListener('click', e=>{ const b = e.target.closest('[data-me]'); if(b) setMe(b.dataset.me); });
   $('summary').addEventListener('click', e=>{ if(e.target.id==='notMe') setMe(''); });
 
+  // ---------- zoom: one step on one job, with its own dated to-dos ----------
+  const todosOf = j => Array.isArray(j && j.todos) ? j.todos : [];
+  function todoBadge(j, step){
+    const open = todosOf(j).filter(t=>t.step===step && !t.done).length;
+    return open ? `<span class="tdb" title="${open} open to-do${open===1?'':'s'}">${open} to-do${open===1?'':'s'}</span>` : '';
+  }
+  function openZoom(jobId, step){
+    if(S.panAt && Date.now()-S.panAt < 300) return;
+    S.zoom = {id:jobId, step}; $('zErr').hidden = true; $('zTitleIn').value = '';
+    const j = S.jobs.find(x=>x.id===jobId), r = j && (jobPlan(j)||[]).find(x=>x.name===step);
+    $('zDateIn').value = r ? iso(fromDayNum(Math.max(r.s, Math.min(r.e-1, dayNum(new Date()))))) : '';
+    $('zOwnerIn').innerHTML = `<option value="">Anyone</option>` + ownerOptions().map(o=>`<option value="${esc(o.key)}">${esc(o.name)}</option>`).join('');
+    const me = S.me && ownerOptions().some(o=>o.key===S.me) ? S.me : ''; $('zOwnerIn').value = me;
+    $('zoom').hidden = false; $('zoomBack').hidden = false; renderZoom(); $('zTitleIn').focus();
+  }
+  function closeZoom(){ S.zoom = null; $('zoom').hidden = true; $('zoomBack').hidden = true; }
+  function renderZoom(){
+    if(!S.zoom || $('zoom').hidden) return;
+    const j = S.jobs.find(x=>x.id===S.zoom.id); if(!j){ closeZoom(); return; }
+    const plan = jobPlan(j) || [], r = plan.find(x=>x.name===S.zoom.step);
+    const color = r ? stepFill(r) : prodFill();
+    $('zoom').style.setProperty('--zc', color);
+    $('zJob').textContent = `${j.name||'Untitled job'}${superKey(j)?' · '+superKey(j):''}`;
+    $('zTitle').textContent = S.zoom.step;
+    $('zMeta').textContent = r ? `${r.dept==='Production'?'Construction':r.dept} · ${rangeTxt(r.s,r.e)} · ${Math.max(1,Math.round((r.e-r.s)/7))} week${Math.round((r.e-r.s)/7)===1?'':'s'}` : 'This step isn’t on the job’s schedule right now.';
+    const list = todosOf(j).filter(t=>t.step===S.zoom.step).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const today = dayNum(new Date()), nowW = P.week.idx(new Date());
+    const ownerSel = t => `<select data-tf="owner" aria-label="Who"><option value="">Anyone</option>${ownerOptions().map(o=>`<option value="${esc(o.key)}"${o.key===t.owner?' selected':''}>${esc(o.name)}</option>`).join('')}</select>`;
+    const row = t => { const d = parseDate(t.date), late = !t.done && d && dayNum(d) < today;
+      return `<div class="zt${t.done?' done':''}${late?' late':''}" data-tid="${esc(t.id)}"><input type="checkbox" data-tf="done"${t.done?' checked':''} aria-label="Done"><input class="ztt" data-tf="title" value="${esc(t.title)}" aria-label="To-do"><input class="zdt" data-tf="date" type="date" value="${esc(t.date||'')}" aria-label="Date">${ownerSel(t)}<button type="button" class="rm" data-tdel aria-label="Delete ${esc(t.title)}">×</button></div>`; };
+    let h = '';
+    if(r){
+      // the step week by week, with each to-do in its week
+      const w0 = P.week.idx(fromDayNum(r.s)), w1 = P.week.idx(fromDayNum(r.e-1));
+      for(let k=w0; k<=w1; k+=7){
+        const items = list.filter(t=>{ const d = parseDate(t.date); return d && P.week.idx(d)===k; });
+        h += `<div class="zwk${k===nowW?' cur':''}"><div class="zd">${k===nowW?'This week':'Week of'}<br>${fmtShort(fromDayNum(k-4))}</div><div class="zl">${items.map(row).join('') || ''}</div></div>`;
+      }
+      const outside = list.filter(t=>{ const d = parseDate(t.date); return !d || P.week.idx(d)<w0 || P.week.idx(d)>w1; });
+      if(outside.length) h += `<p class="zout">Outside this step’s dates</p>` + outside.map(row).join('');
+    } else h += list.map(row).join('');
+    if(!list.length) h = `<p class="zempty">No to-dos yet. Add one above. They show only here, with a small count on the Board.</p>` + h;
+    $('zWeeks').innerHTML = h;
+  }
+  async function saveTodos(j, next, undoMsg){
+    const before = todosOf(j).map(t=>({...t}));
+    try{ await applyJobFields(j.id, {todos: next}); }catch(e){}
+    if(undoMsg) showToast(esc(undoMsg), ()=>applyJobFields(j.id, {todos: before}));
+  }
+  $('zAdd').addEventListener('click', ()=>{
+    const j = S.jobs.find(x=>x.id===S.zoom.id); if(!j) return;
+    const title = $('zTitleIn').value.trim(), date = $('zDateIn').value;
+    if(!title){ $('zErr').textContent = 'Give the to-do a name.'; $('zErr').hidden = false; return; }
+    if(!parseDate(date)){ $('zErr').textContent = 'Pick a date.'; $('zErr').hidden = false; return; }
+    $('zErr').hidden = true;
+    const t = {id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), step:S.zoom.step, title, date};
+    if($('zOwnerIn').value) t.owner = $('zOwnerIn').value;
+    saveTodos(j, [...todosOf(j), t]);
+    $('zTitleIn').value = ''; $('zTitleIn').focus();
+  });
+  $('zTitleIn').addEventListener('keydown', e=>{ if(e.key==='Enter') $('zAdd').click(); });
+  $('zWeeks').addEventListener('change', e=>{
+    const row = e.target.closest('[data-tid]'), f = e.target.dataset.tf; if(!row || !f) return;
+    const j = S.jobs.find(x=>x.id===S.zoom.id); if(!j) return;
+    const next = todosOf(j).map(t=>{ if(t.id!==row.dataset.tid) return t; const u = {...t};
+      if(f==='done') u.done = e.target.checked; else if(f==='title'){ const v = e.target.value.trim(); if(v) u.title = v; } else if(f==='date'){ if(parseDate(e.target.value)) u.date = e.target.value; } else if(f==='owner'){ if(e.target.value) u.owner = e.target.value; else delete u.owner; }
+      return u; });
+    saveTodos(j, next);
+  });
+  $('zWeeks').addEventListener('click', e=>{
+    const del = e.target.closest('[data-tdel]'); if(!del) return;
+    const j = S.jobs.find(x=>x.id===S.zoom.id); if(!j) return;
+    const id = del.closest('[data-tid]').dataset.tid, t = todosOf(j).find(x=>x.id===id);
+    saveTodos(j, todosOf(j).filter(x=>x.id!==id), `Deleted “${t?t.title:'to-do'}”.`);
+  });
+  $('zClose').addEventListener('click', closeZoom);
+  $('zoomBack').addEventListener('click', closeZoom);
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && S.zoom){ e.stopImmediatePropagation(); closeZoom(); } }, true);
+  // clicking a block that isn't draggable (active jobs, or anyone without admin access) zooms in too
+  $('table').addEventListener('click', e=>{
+    const td = e.target.closest('td[data-zstep]'); if(!td) return;
+    if(isAdmin() && td.hasAttribute('data-drag')) return;  // handled at the end of the drag
+    openZoom(td.dataset.zjob, td.dataset.zstep);
+  });
+
   function render(){
+    setTimeout(renderZoom,0);
     renderList();
     const ag = aggregate();
     const sup = S.tab==='supers', sch = S.tab==='schedule', mat = S.tab==='materials', home = S.tab==='home';
@@ -1754,6 +1966,7 @@ td.job{padding-left:18px}
   window.addEventListener('mousemove', e=>{
     const d = S.drag; if(!d) return;
     const tip = $('dragTip'); tip.style.left = (e.clientX+14)+'px'; tip.style.top = (e.clientY+14)+'px';
+    if(Math.abs(e.clientY - d.y0) > 4) d.moved = true;
     const delta = Math.round((e.clientY - d.y0) / d.rowH);
     if(delta === d.delta) return;
     d.delta = delta; d.preview = delta ? movedJob(d.orig, d.step, delta, d.mode) : null;
@@ -1763,7 +1976,7 @@ td.job{padding-left:18px}
   function endDrag(commit){
     const d = S.drag; if(!d) return;
     S.drag = null; $('dragTip').hidden = true; document.body.classList.remove('moving');
-    if(!commit || !d.delta){ renderSchedule(); return; }
+    if(!commit || !d.delta){ renderSchedule(); if(commit && !d.moved) openZoom(d.id, d.step); return; }
     const upd = movedJob(d.orig, d.step, d.delta, d.mode);
     let fields, undo;
     if(d.step==='Construction' && d.mode==='resize'){ fields = {duration:upd.duration, durUnit:upd.durUnit}; undo = {duration:d.orig.duration, durUnit:d.orig.durUnit}; }
@@ -1795,6 +2008,14 @@ td.job{padding-left:18px}
   $('msort').addEventListener('change', e=>{ S.msort = e.target.value; S.mdir = 1; render(); });
   document.querySelectorAll('[data-mview]').forEach(b=>b.addEventListener('click',()=>{ S.matView = b.dataset.mview; document.querySelectorAll('[data-mview]').forEach(x=>x.setAttribute('aria-pressed', x===b)); render(); }));
   document.querySelectorAll('[data-mdate]').forEach(b=>b.addEventListener('click',()=>{ S.matDate = b.dataset.mdate; document.querySelectorAll('[data-mdate]').forEach(x=>x.setAttribute('aria-pressed', x===b)); render(); }));
+  const isHidden = n => S.hidden.has(n);
+  $('legDept').addEventListener('click', e=>{
+    const b = e.target.closest('[data-hide],[data-showall]'); if(!b) return;
+    if(b.dataset.showall!==undefined) S.hidden.clear();
+    else { const n = b.dataset.hide; S.hidden.has(n) ? S.hidden.delete(n) : S.hidden.add(n); }
+    try{ localStorage.setItem('fc_hidden', JSON.stringify([...S.hidden])); }catch(e){}
+    render();
+  });
   $('boardSort').addEventListener('change', e=>{ S.boardSort = e.target.value; render(); });
   $('focusBtn').addEventListener('click',()=>setFocus(!document.body.classList.contains('focus')));
   document.addEventListener('keydown', e=>{
@@ -1814,7 +2035,7 @@ td.job{padding-left:18px}
       if(!d) return;
       const dx = e.clientX-d.x, dy = e.clientY-d.y;
       if(!d.moved && Math.abs(dx)+Math.abs(dy) < 4) return;
-      d.moved = true; tw.classList.add('dragging');
+      d.moved = true; S.panAt = Date.now(); tw.classList.add('dragging');
       tw.scrollLeft = d.l - dx; tw.scrollTop = d.t - dy; e.preventDefault();
     });
     window.addEventListener('mouseup', ()=>{ d = null; tw.classList.remove('dragging'); });
@@ -1899,7 +2120,7 @@ td.job{padding-left:18px}
     }, ()=>{});
     db.collection('jobs').onSnapshot(snap=>{
       S.jobs = snap.docs.filter(d=>d.exists).map(d=>({id:d.id, ...d.data()}));
-      S.storage = 'db';
+      S.storage = 'db'; setTimeout(renderZoom,0);
       if(S.sel && S.sel!=='new' && !S.jobs.find(j=>j.id===S.sel)) { S.sel=null; $('editor').hidden=true; document.body.classList.remove('editing'); }
       render();
     }, ()=>{ S.db = null; S.storage = 'memory'; render(); });
@@ -1907,27 +2128,51 @@ td.job{padding-left:18px}
 
   // ---------- sign-in ----------
   (async()=>{
-    const showAuth = step => { $('auth').hidden = false; ['authStep1','authStep2','authDenied'].forEach(id=>$(id).hidden = id!==step); $('authErr').hidden = true; };
+    const STEPS = ['authPw','authStep1','authStep2','authSetPw','authDenied'];
+    const showAuth = step => { $('auth').hidden = false; STEPS.forEach(id=>$(id).hidden = id!==step); $('authErr').hidden = true; };
     const authErr = m => { $('authErr').textContent = m; $('authErr').hidden = false; };
-    if(!window.supabase || SUPABASE_KEY.startsWith('PASTE')){ S.storage = 'memory'; render(); showAuth('authStep1'); authErr('This copy of the app isn’t connected to the database yet.'); return; }
+    let remembered = ''; try{ remembered = localStorage.getItem('fc_email') || ''; }catch(e){}
+    if(remembered){ $('authEmail').value = remembered; $('authEmail2').value = remembered; }
+    if(!window.supabase || SUPABASE_KEY.startsWith('PASTE')){ S.storage = 'memory'; render(); showAuth('authPw'); authErr('This copy of the app isn’t connected to the database yet.'); return; }
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true } });
-    let started = false, checking = false;
+    let started = false, checking = false, viaCode = false;
     async function onSession(session){
-      if(!session){ showAuth('authStep1'); $('signOut').hidden = true; $('whoami').textContent = ''; return; }
+      if(!session){ showAuth('authPw'); $('signOut').hidden = true; $('whoami').textContent = ''; if($('authEmail').value) $('authPass').focus(); return; }
       if(started || checking) return; checking = true;
       const email = session.user.email || '';
+      try{ localStorage.setItem('fc_email', email); }catch(e){}
       // members only: the member list is readable only by people on it
       const m = await sb.from('fc_members').select('email,role').ilike('email', email).limit(1);
       checking = false;
       if(m.error || !m.data || !m.data.length){ $('authDeniedEmail').textContent = email; showAuth('authDenied'); return; }
-      S.role = m.data[0].role === 'admin' ? 'admin' : 'ordering'; S.sb = sb;
+      // after a code sign-in, offer to set a password (once, unless they've never set one)
+      const hasPw = session.user.user_metadata && session.user.user_metadata.has_password;
+      if(viaCode && !S.pwOffered){ S.pwOffered = true; $('authSetUser').value = email; $('authSetPw').querySelector('b').textContent = hasPw ? 'Set a new password' : 'Set a password'; showAuth('authSetPw'); $('authNewPass').focus(); S.pendingSession = {session, role:m.data[0].role}; return; }
+      enter(email, m.data[0].role);
+    }
+    function enter(email, role){
+      S.role = role === 'admin' ? 'admin' : 'ordering'; S.sb = sb;
       document.body.classList.toggle('ro', S.role!=='admin');
       $('auth').hidden = true; $('signOut').hidden = false; $('whoami').textContent = `${email} (${S.role==='admin'?'Admin':'Ordering'})`;
       if(S.role==='admin') loadMembers();
       started = true; startData(makeDb(sb), email);
     }
+    // password sign-in
+    $('authPw').addEventListener('submit', async e=>{
+      e.preventDefault();
+      const email = $('authEmail').value.trim(), password = $('authPass').value;
+      if(!/^\S+@\S+\.\S+$/.test(email)) return authErr('Enter your work email.');
+      if(!password) return authErr('Enter your password, or use “Email me a code”.');
+      $('authLogin').disabled = true;
+      const r = await sb.auth.signInWithPassword({ email, password });
+      $('authLogin').disabled = false;
+      if(r.error) return authErr(/invalid/i.test(r.error.message) ? 'That email and password don’t match. If you haven’t set a password yet, use “Email me a code”.' : 'Couldn’t sign in. Try again.');
+    });
+    $('authUseCode').addEventListener('click', ()=>{ $('authEmail2').value = $('authEmail').value; showAuth('authStep1'); $('authEmail2').focus(); });
+    $('authToPw').addEventListener('click', ()=>{ $('authEmail').value = $('authEmail2').value; showAuth('authPw'); });
+    // code sign-in
     $('authSend').addEventListener('click', async ()=>{
-      const email = $('authEmail').value.trim();
+      const email = $('authEmail2').value.trim();
       if(!/^\S+@\S+\.\S+$/.test(email)) return authErr('Enter a valid email address.');
       $('authSend').disabled = true;
       const redirect = /^https?:/.test(location.protocol) ? location.href.split('#')[0] : undefined;
@@ -1936,17 +2181,32 @@ td.job{padding-left:18px}
       if(r.error) return authErr(/rate|seconds/i.test(r.error.message) ? 'Too many tries. Wait a minute and try again.' : 'Couldn’t send the code. Check the email address and try again.');
       showAuth('authStep2'); $('authCode').focus();
     });
-    $('authEmail').addEventListener('keydown', e=>{ if(e.key==='Enter') $('authSend').click(); });
+    $('authEmail2').addEventListener('keydown', e=>{ if(e.key==='Enter') $('authSend').click(); });
     $('authVerify').addEventListener('click', async ()=>{
-      const email = $('authEmail').value.trim(), token = $('authCode').value.replace(/\s/g,'');
+      const email = $('authEmail2').value.trim(), token = $('authCode').value.replace(/\s/g,'');
       if(!token) return authErr('Enter the code from the email.');
-      $('authVerify').disabled = true;
+      $('authVerify').disabled = true; viaCode = true;
       const r = await sb.auth.verifyOtp({ email, token, type:'email' });
       $('authVerify').disabled = false;
-      if(r.error) return authErr('That code didn’t work. Check it, or send a new one.');
+      if(r.error){ viaCode = false; return authErr('That code didn’t work. Check it, or send a new one.'); }
     });
     $('authCode').addEventListener('keydown', e=>{ if(e.key==='Enter') $('authVerify').click(); });
     $('authBack').addEventListener('click', ()=>showAuth('authStep1'));
+    // set a password after a code sign-in
+    const finishPending = () => { const p = S.pendingSession; S.pendingSession = null; if(p) enter(p.session.user.email||'', p.role); };
+    $('authSetPw').addEventListener('submit', async e=>{
+      e.preventDefault();
+      const pw = $('authNewPass').value;
+      if(pw.length < 8) return authErr('Use at least 8 characters.');
+      $('authSavePw').disabled = true;
+      const r = await sb.auth.updateUser({ password: pw, data:{ has_password:true } });
+      $('authSavePw').disabled = false;
+      if(r.error) return authErr(/weak|short|characters/i.test(r.error.message) ? 'That password is too weak. Try a longer one.' : 'Couldn’t save the password. You can skip and try again next time.');
+      finishPending();
+    });
+    $('authSkipPw').addEventListener('click', finishPending);
+    // a link in the email lands here with a session too; treat it like a code sign-in
+    if(/access_token|type=magiclink|type=signup/.test(location.hash)) viaCode = true;
     const out = async ()=>{ await sb.auth.signOut(); try{ localStorage.removeItem('fc_me'); }catch(e){} location.reload(); };
     $('signOut').addEventListener('click', out); $('authDeniedOut').addEventListener('click', out);
     sb.auth.onAuthStateChange((evt, session)=>{ setTimeout(()=>onSession(session), 0); });
