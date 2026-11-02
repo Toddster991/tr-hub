@@ -336,7 +336,7 @@ td.job{padding-left:18px}
 </style>
 </head>
 <body>
-<div class="topbar"><strong>Billing forecast</strong><span>TR Design Build</span><span class="ver" title="App version">v 2026-11-02d</span><span class="status" id="saveStatus">Loading jobs…</span><span id="whoami"></span><button type="button" class="linkbtn" id="signOut" hidden>Sign out</button></div>
+<div class="topbar"><strong>Billing forecast</strong><span>TR Design Build</span><span class="ver" title="App version">v 2026-11-02e</span><span class="status" id="saveStatus">Loading jobs…</span><span id="whoami"></span><button type="button" class="linkbtn" id="signOut" hidden>Sign out</button></div>
 <div id="auth" hidden>
   <div class="authcard">
     <p class="authbrand">TR Design Build</p>
@@ -448,7 +448,7 @@ td.job{padding-left:18px}
 </div>
 
 <div id="modalBack"></div>
-<form class="editor" id="editor" hidden autocomplete="off" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+<form class="editor" id="editor" hidden autocomplete="off" novalidate role="dialog" aria-modal="true" aria-labelledby="editorTitle">
   <div class="mhead">
     <h2 id="editorTitle">New job</h2>
     <div class="seg" role="group" aria-label="Job sections" id="secSeg">
@@ -1770,7 +1770,7 @@ td.job{padding-left:18px}
     steps().forEach(st=>{
       const v = S.durEdit[st.name], changed = parseFloat(v)>0 && parseFloat(v)!==defaultDur(S.durEdit, st), lead = st.withPrev ? leadOf(st) : null;
       h += `<tr data-dstep="${esc(st.name)}"${changed?' class="chg"':''}><td class="dn">${esc(st.name)}<span class="sub2">${lead?`alongside ${esc(lead.name)}, follows its length · `:''}<span class="dst"></span></span></td>
-        <td><input type="number" min="0.5" step="0.5" value="${changed?esc(v):''}" placeholder="${esc(defaultDur(S.durEdit, st))}" aria-label="${esc(st.name)} length in ${st.unit==='days'?'days':'weeks'}"></td>
+        <td><input type="number" min="0.01" step="0.01" value="${changed?esc(v):''}" placeholder="${esc(defaultDur(S.durEdit, st))}" aria-label="${esc(st.name)} length in ${st.unit==='days'?'days':'weeks'}"></td>
         <td class="du">${unitTxt(st)}</td><td><input type="date" data-dend aria-label="${esc(st.name)} finish date"></td><td>${changed?`<button type="button" class="rm" data-dreset title="Use the standard length" aria-label="Use the standard length for ${esc(st.name)}">↺</button>`:''}</td></tr>`;
     });
     const cw = fj.durUnit==='months' ? monthsToWeeks(parseFloat(fj.duration)) : Math.round(parseFloat(fj.duration));
