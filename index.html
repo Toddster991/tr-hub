@@ -331,7 +331,7 @@ td.job{padding-left:18px}
 </style>
 </head>
 <body>
-<div class="topbar"><strong>Billing forecast</strong><span>TR Design Build</span><span class="ver" title="App version">v 2026-11-02b</span><span class="status" id="saveStatus">Loading jobs…</span><span id="whoami"></span><button type="button" class="linkbtn" id="signOut" hidden>Sign out</button></div>
+<div class="topbar"><strong>Billing forecast</strong><span>TR Design Build</span><span class="ver" title="App version">v 2026-11-02c</span><span class="status" id="saveStatus">Loading jobs…</span><span id="whoami"></span><button type="button" class="linkbtn" id="signOut" hidden>Sign out</button></div>
 <div id="auth" hidden>
   <div class="authcard">
     <p class="authbrand">TR Design Build</p>
@@ -540,7 +540,7 @@ td.job{padding-left:18px}
   const monthsToWeeks = m => Math.max(1, Math.round(m*52/12));
   const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  const S = { hidden:new Set((()=>{ try{ return JSON.parse(localStorage.getItem('fc_hidden')||'[]'); }catch(e){ return []; } })()), msort:'order', mdir:1, owner:'all', matView:'urgency', matDate:'order', people:null, sec:'details', matEdit:{}, deptView:'Design', boardSort:'first', zoom:'m', sview:'job', template:null, tab:'home', me:(()=>{ try{ return localStorage.getItem('fc_me') || ''; }catch(e){ return ''; } })(), jobs:[], db:null, storage:'loading', sel:null, editStatus:'active', period:'week', showDesign:true, confirmDel:false };
+  const S = { hidden:new Set((()=>{ try{ return JSON.parse(localStorage.getItem('fc_hidden')||'[]'); }catch(e){ return []; } })()), msort:'order', mdir:1, owner:'all', matView:'urgency', matDate:'order', people:null, sec:'details', matEdit:{}, deptView:'Design', boardSort:(()=>{ try{ return localStorage.getItem('fc_boardSort') || 'Production'; }catch(e){ return 'Production'; } })(), zoom:'m', sview:'job', template:null, tab:'home', me:(()=>{ try{ return localStorage.getItem('fc_me') || ''; }catch(e){ return ''; } })(), jobs:[], db:null, storage:'loading', sel:null, editStatus:'active', period:'week', showDesign:true, confirmDel:false };
 
   function split(total, n){
     const cents = Math.round(total*100), each = Math.floor(cents/n), out = [];
@@ -805,9 +805,24 @@ td.job{padding-left:18px}
 
   // All scheduled steps for one job, as day numbers [s, e) (e exclusive)
   // a job's own length for a step (in the step's unit), else the standard length
+  // the step a parallel step runs alongside: the nearest earlier step that isn't parallel itself
+  function leadOf(st){
+    const list = steps(), i = list.findIndex(x=>x.name===st.name);
+    for(let k=i-1; k>=0; k--) if(!list[k].withPrev) return list[k];
+    return null;
+  }
   function stepDaysFor(j, st){
     const o = j && j.stepDur && typeof j.stepDur==='object' ? parseFloat(j.stepDur[st.name]) : NaN;
-    return o > 0 ? Math.max(1, Math.round(o * (st.unit==='days' ? 1 : 7))) : stepDays(st);
+    if(o > 0) return Math.max(1, Math.round(o * (st.unit==='days' ? 1 : 7)));
+    // a parallel step without its own length stretches and shrinks with the step it runs alongside
+    if(st.withPrev){ const lead = leadOf(st); if(lead) return Math.max(1, Math.round(stepDaysFor(j, lead) * stepDays(st) / stepDays(lead))); }
+    return stepDays(st);
+  }
+  // a step's length on this job when it has no override of its own, in the step's unit
+  function defaultDur(stepDur, st){
+    const others = {...(stepDur||{})}; delete others[st.name];
+    const d = stepDaysFor({stepDur:others}, st);
+    return Math.round((st.unit==='days' ? d : d/7) * 100) / 100;
   }
   // Change one step's length on a job (newDur in the step's own unit; empty = standard).
   // Kickoff stays where it is; every step after it, and the production start, move by the same amount.
@@ -815,7 +830,7 @@ td.job{padding-left:18px}
     const st = steps().find(x=>x.name===name); if(!st || !parseDate(j.start)) return null;
     const base = {...j, stepDates:null};
     const dur0 = {...(j.stepDur && typeof j.stepDur==='object' ? j.stepDur : {})}, dur1 = {...dur0};
-    if(newDur > 0 && newDur !== parseFloat(st.dur)) dur1[name] = Math.round(newDur*100)/100; else delete dur1[name];
+    if(newDur > 0 && Math.round(newDur*100)/100 !== defaultDur(dur0, st)) dur1[name] = Math.round(newDur*100)/100; else delete dur1[name];
     const p0 = jobPlan({...base, stepDur:dur0}, false), p1 = jobPlan({...base, stepDur:dur1}, false);
     if(!p0 || !p1) return null;
     const span = p => p.find(r=>r.dept===PROD).s - p[0].s;
@@ -1084,7 +1099,7 @@ td.job{padding-left:18px}
 
     // column order: by the start of the chosen department (jobs without it go last), else by first step
     const opts = [['first','First step']].concat(deptOrder().map(d=>[d, d+' start']));
-    if(!opts.some(o=>o[0]===S.boardSort)) S.boardSort = 'first';
+    if(!opts.some(o=>o[0]===S.boardSort)) S.boardSort = opts.some(o=>o[0]===PROD) ? PROD : 'first';
     $('boardSort').innerHTML = opts.map(([v,l])=>`<option value="${esc(v)}"${v===S.boardSort?' selected':''}>${esc(l)}</option>`).join('');
     const sortKey = x => {
       if(S.boardSort==='first') return x.plan[0].s;
@@ -1747,9 +1762,9 @@ td.job{padding-left:18px}
     const unitTxt = st => st.unit==='days' ? 'days' : 'wk';
     let h = `<p class="calc-h">Step durations</p><p class="fixed" style="font-size:13px;margin:0 0 8px">Standard lengths are filled in. Type a different number to change it for this job only. Kickoff stays put, and everything after the step moves, including production start.</p><table class="durt"><tbody>`;
     steps().forEach(st=>{
-      const v = S.durEdit[st.name], changed = parseFloat(v)>0 && parseFloat(v)!==parseFloat(st.dur);
-      h += `<tr data-dstep="${esc(st.name)}"${changed?' class="chg"':''}><td class="dn">${esc(st.name)}${st.withPrev?'<span class="sub2">alongside the step before</span>':''}</td>
-        <td><input type="number" min="0.5" step="0.5" value="${changed?esc(v):''}" placeholder="${esc(st.dur)}" aria-label="${esc(st.name)} length in ${st.unit==='days'?'days':'weeks'}"></td>
+      const v = S.durEdit[st.name], changed = parseFloat(v)>0 && parseFloat(v)!==defaultDur(S.durEdit, st), lead = st.withPrev ? leadOf(st) : null;
+      h += `<tr data-dstep="${esc(st.name)}"${changed?' class="chg"':''}><td class="dn">${esc(st.name)}${lead?`<span class="sub2">alongside ${esc(lead.name)}, follows its length</span>`:''}</td>
+        <td><input type="number" min="0.5" step="0.5" value="${changed?esc(v):''}" placeholder="${esc(defaultDur(S.durEdit, st))}" aria-label="${esc(st.name)} length in ${st.unit==='days'?'days':'weeks'}"></td>
         <td class="du">${unitTxt(st)}</td><td>${changed?`<button type="button" class="rm" data-dreset title="Use the standard length" aria-label="Use the standard length for ${esc(st.name)}">↺</button>`:''}</td></tr>`;
     });
     const cw = fj.durUnit==='months' ? monthsToWeeks(parseFloat(fj.duration)) : Math.round(parseFloat(fj.duration));
@@ -1929,7 +1944,7 @@ td.job{padding-left:18px}
     if(fj.status==='design'){
       Object.assign(body,{price:fj.price,start:fj.start,duration:fj.duration,durUnit:fj.durUnit});
       const dur = {};
-      steps().forEach(st=>{ const v = parseFloat((S.durEdit||{})[st.name]); if(v>0 && v!==parseFloat(st.dur)) dur[st.name] = v; });
+      steps().forEach(st=>{ const v = parseFloat((S.durEdit||{})[st.name]); if(v>0 && v!==defaultDur(S.durEdit, st)) dur[st.name] = v; });
       if(Object.keys(dur).length) body.stepDur = dur;
       if(S.stepEdit && !S.stepEdit.auto){
         const auto = jobPlan({...fj, stepDates:null}, false) || [];
@@ -1987,7 +2002,9 @@ td.job{padding-left:18px}
     if(e.target.id==='f-conwk'){ const v = parseFloat(e.target.value); if(v>0){ F('dur').value = Math.round(v); F('unit').value = 'weeks'; } }
     else { const tr = e.target.closest('[data-dstep]'); if(!tr) return; const n = tr.dataset.dstep, v = parseFloat(e.target.value);
       applyPush(n, v);
-      const st = steps().find(x=>x.name===n), chg = !!(v>0 && st && v!==parseFloat(st.dur));
+      const st = steps().find(x=>x.name===n), chg = !!(v>0 && st && v!==defaultDur(S.durEdit, st));
+      // parallel steps that follow this one show their new length right away
+      F('durs').querySelectorAll('tr[data-dstep]').forEach(row=>{ const ps = steps().find(x=>x.name===row.dataset.dstep); if(ps && ps.withPrev){ const inp = row.querySelector('input'); inp.placeholder = defaultDur(S.durEdit, ps); } });
       tr.classList.toggle('chg', chg);
       tr.lastElementChild.innerHTML = chg ? `<button type="button" class="rm" data-dreset title="Use the standard length" aria-label="Use the standard length for ${esc(n)}">↺</button>` : ''; }
     F('err').hidden = true; updateDurSummary(); renderStepFields(); renderEditorExtras(); preview();
@@ -2203,7 +2220,7 @@ td.job{padding-left:18px}
     try{ localStorage.setItem('fc_hidden', JSON.stringify([...S.hidden])); }catch(e){}
     render();
   });
-  $('boardSort').addEventListener('change', e=>{ S.boardSort = e.target.value; render(); });
+  $('boardSort').addEventListener('change', e=>{ S.boardSort = e.target.value; try{ localStorage.setItem('fc_boardSort', S.boardSort); }catch(err){} render(); });
   $('focusBtn').addEventListener('click',()=>setFocus(!document.body.classList.contains('focus')));
   document.addEventListener('keydown', e=>{
     if(e.key!=='Escape') return;
