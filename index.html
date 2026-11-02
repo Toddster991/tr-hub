@@ -173,7 +173,7 @@ th.bd-h:hover{background:var(--now)}
 .authcard{width:min(400px,100%);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:28px}
 .authbrand{margin:0 0 4px;color:var(--muted);font-size:14px;font-weight:600}
 #whoami{font-size:13px;color:var(--muted)}
-body.ro #addJob, body.ro #peopleBox, body.ro #ctBox, body.ro #tplBox{display:none!important}
+body.ro #addJob, body.ro #peopleBox, body.ro #ctBox, body.ro #tplBox, body.ro .admintab{display:none!important}
 body.ro .sw{pointer-events:none;opacity:.6}
 body.ro td[data-drag]{cursor:default}
 #tplEditor td.ord{white-space:nowrap}
@@ -237,6 +237,92 @@ table.durt tr.chg input{border-color:#C9820A}
 table.durt tr.conrow td{border-top:2px solid var(--rule);font-weight:600}
 .dsum{font-size:14px;margin:10px 0 0}
 .topbar .ver{font-size:12px;color:var(--muted);border:1px solid var(--rule);border-radius:8px;padding:0 6px}
+#timeCard{margin:4px 0 26px}
+.tcprint{padding:6px 12px;font-size:14px}
+.hrfilters{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;padding:12px;border:1px solid var(--rule);border-radius:8px;background:var(--paper)}
+.hrfilters label{display:flex;flex-direction:column;gap:4px;margin:0;font-size:13px}
+.hrfilters input,.hrfilters select{width:auto;min-width:130px;padding:6px 8px;font-size:14px}
+.hrbtns{margin-left:auto;display:flex;gap:8px}
+.hrbtns .ghost{padding:7px 12px;font-size:14px}
+table.hr{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
+table.hr th{text-align:left;font-size:13px;font-weight:600;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--ink);background:var(--paper)}
+table.hr td{padding:7px 10px;border-bottom:1px solid var(--rule);text-align:left;background:var(--paper)}
+table.hr .n{text-align:right;width:90px}
+table.hr .hrbar{width:34%} table.hr td.hrbar span{display:block;height:10px;border-radius:2px;background:var(--active)} table.hr td.hrbar span.lt{background:color-mix(in srgb,var(--active) 45%,var(--paper))}
+table.hr tr.hrg td{font-weight:600;border-top:1px solid var(--ink)}
+table.hr tr.hrs td:first-child{padding-left:28px;color:var(--muted)}
+table.hr tfoot td{font-weight:700;border-top:2px solid var(--ink);border-bottom:0}
+#printSheet{display:none}
+@media print{
+  @page{size:letter landscape;margin:0.5in}
+  body.printing > *:not(#printSheet){display:none!important}
+  body.printing #printSheet{display:block}
+  body.printing{background:#fff}
+}
+.ps{font-family:var(--sans);color:#000;background:#fff}
+.ps table{min-width:0;border-collapse:collapse;border-spacing:0}
+.ps th,.ps td{position:static!important;background:none!important;border-right:0!important;max-width:none!important;white-space:normal;text-align:left;overflow:visible}
+.ps .pshead > div{flex:1}
+.ps .psmeta{width:auto;margin-left:30px}
+.ps .psmeta th{white-space:nowrap}
+.ps .psmeta td{white-space:nowrap;text-align:left}
+.pshead{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px}
+.psco{margin:0;font-size:12pt;font-weight:600} .ps h1{margin:2px 0 0;font-family:var(--cond);font-size:26pt}
+.psmeta th{text-align:left;padding:2px 12px 2px 0;font-size:10pt;color:#444;font-weight:600} .psmeta td{font-size:11pt;padding:2px 0}
+.pst{width:100%;border-collapse:collapse;font-size:10.5pt}
+.pst th{text-align:left;border-bottom:1.5px solid #000;padding:6px 6px;font-size:9.5pt}
+.pst td{border-bottom:1px solid #bbb;padding:6px 6px}
+.ps .pst .n{text-align:right} .pst .b{font-weight:700}
+.pst tfoot td{font-weight:700;border-top:1.5px solid #000;border-bottom:0}
+.pssign{display:flex;gap:30px;margin-top:46px} .pssign div{flex:1;font-size:9.5pt;color:#444} .pssign span{display:block;border-bottom:1px solid #000;height:28px;margin-bottom:4px}
+.psnote{margin-top:18px;font-size:8.5pt;color:#666}
+.tchead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+.tctoggle{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;cursor:pointer;color:var(--ink)}
+.tcchev{font-size:14px;color:var(--muted);width:12px}
+.tcsum{font-size:15px;font-weight:600;color:var(--muted)}
+.tcweek{margin-left:auto;display:flex;align-items:center;gap:6px}
+.tcweek .ghost{padding:4px 10px;font-size:16px;line-height:1}
+.tcrange{font-size:14px;font-weight:600;min-width:170px;text-align:center}
+.tcwrap{margin-top:0}
+table.tc{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
+table.tc th{font-size:13px;font-weight:600;color:var(--muted);text-align:left;padding:8px 6px;border-bottom:1px solid var(--ink);background:var(--paper)}
+table.tc th.tcd{text-align:center}
+table.tc th.tcd span{display:block;font-weight:400;font-size:11px}
+table.tc td{padding:5px 6px;border-bottom:1px solid var(--rule);text-align:left;background:var(--paper)}
+table.tc tbody td:first-child{box-shadow:inset 5px 0 0 var(--tcc,#9AA5AB);padding-left:12px}
+table.tc td.tcd{text-align:center;width:62px}
+table.tc .wkend{background:color-mix(in srgb,var(--rule) 25%,var(--paper))}
+table.tc .today{background:color-mix(in srgb,var(--nowline) 7%,var(--paper))}
+table.tc th.today{color:var(--nowline);box-shadow:inset 0 -3px 0 var(--nowline)}
+table.tc td.tcjob{min-width:190px}
+table.tc td.tcjob{white-space:normal;overflow:visible}
+table.tc td.tcjob input,table.tc td.tcjob select{display:block;width:100%}
+table.tc td.tcjob select{margin-top:4px;font-size:13px;padding:3px 6px;color:var(--muted)}
+table.tc td.tcjob select:not(:disabled){color:var(--ink)}
+table.tc td.tcd{width:52px}
+#homeCols{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px;align-items:start}
+#homeCols[hidden]{display:none}
+#homeRight td{white-space:normal}
+#homeRight #table th, #homeRight #table td{padding:6px 8px}
+#homeRight select.inl{font-size:13px;padding:3px 4px;max-width:118px}
+#homeRight #table td .cnt{display:block;margin:0}
+#homeRight #homeTodos .tablewrap, #homeRight #tableWrap{margin-top:8px}
+#homeLeft #timeCard{margin:0}
+body.homepage .wrap{grid-template-columns:minmax(0,1fr)}
+body.homepage aside{display:none}
+body.homepage.editing aside{display:none}
+@media (max-width:1100px){ #homeCols{grid-template-columns:1fr} }
+table.tc input,table.tc select{width:100%;padding:5px 7px;font-size:14px}
+table.tc input[type=number]{text-align:center;padding:5px 2px;-moz-appearance:textfield}
+table.tc input[type=number]::-webkit-inner-spin-button{display:none}
+table.tc input.bad{border-color:var(--load3)}
+table.tc td.tct{font-weight:700}
+table.tc tfoot td{font-weight:700;border-top:1px solid var(--ink);border-bottom:0}
+table.tc tfoot td.tcall{font-size:16px;color:var(--ink)}
+table.tc tfoot .ghost{padding:6px 12px;font-size:14px}
+.tcfoot{margin:6px 0 0;min-height:18px}
+#tcStatus{font-size:13px}
+#tcStatus.bad{color:var(--load3)}
 td[data-drag]{cursor:ns-resize}
 body.moving, body.moving *{cursor:ns-resize!important;user-select:none}
 #dragTip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;font-weight:500;padding:5px 9px;border-radius:5px;white-space:nowrap}
@@ -336,7 +422,7 @@ td.job{padding-left:18px}
 </style>
 </head>
 <body>
-<div class="topbar"><strong>Billing forecast</strong><span>TR Design Build</span><span class="ver" title="App version">v 2026-11-02e</span><span class="status" id="saveStatus">Loading jobs…</span><span id="whoami"></span><button type="button" class="linkbtn" id="signOut" hidden>Sign out</button></div>
+<div class="topbar"><strong>Billing forecast</strong><span>TR Design Build</span><span class="ver" title="App version">v 2026-11-02h</span><span class="status" id="saveStatus">Loading jobs…</span><span id="whoami"></span><button type="button" class="linkbtn" id="signOut" hidden>Sign out</button></div>
 <div id="auth" hidden>
   <div class="authcard">
     <p class="authbrand">TR Design Build</p>
@@ -390,6 +476,7 @@ td.job{padding-left:18px}
       <button type="button" data-tab="supers" aria-pressed="false">Supervisors</button>
       <button type="button" data-tab="schedule" aria-pressed="false">Schedule</button>
       <button type="button" data-tab="materials" aria-pressed="false">Materials</button>
+      <button type="button" data-tab="hours" aria-pressed="false" class="admintab">Hours</button>
     </div>
     <h1 id="mainTitle">All jobs</h1>
     <p class="summary" id="summary"></p>
@@ -434,7 +521,10 @@ td.job{padding-left:18px}
       </div>
     </div>
     <div class="chart" id="chart"></div>
+    <div id="homeCols" hidden><div id="homeLeft"></div><div id="homeRight"></div></div>
     <div id="homePick" hidden></div>
+    <section id="timeCard" hidden></section>
+    <section id="hoursRpt" hidden></section>
     <div id="homeTodos" hidden></div>
     <div class="tablewrap" id="tableWrap"><table id="table"></table></div>
     <p class="note" id="noteMats" hidden>Each job's construction type sets its phases, which stretch to fit the job's construction length, and which materials are needed at which phase. An item's order-by date is the date it's needed on site, minus its lead time, minus the buffer. Until a product is picked, the long end of the lead time is used. Click any row to open that job's materials.</p>
@@ -508,6 +598,7 @@ td.job{padding-left:18px}
     <button type="submit" class="primary" id="f-save">Save job</button>
   </div>
 </form>
+<div id="printSheet"></div>
 <div id="zoomBack" hidden></div>
 <section id="zoom" hidden role="dialog" aria-modal="true" aria-labelledby="zTitle">
   <div class="zhead"><div><p class="zjob" id="zJob"></p><h2 id="zTitle"></h2><p class="zmeta" id="zMeta"></p></div><button type="button" class="ghost" id="zClose">Close</button></div>
@@ -1679,18 +1770,269 @@ td.job{padding-left:18px}
     openZoom(td.dataset.zjob, td.dataset.zstep);
   });
 
+  // ---------- time card: hours by job and phase for one week ----------
+  const TC_CATS = [['@EOS','EOS'],['@Schedule','Schedule'],['@Misc','Misc']];
+  const TC_DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const mondayOf = d => addDays(d, -((d.getDay()+6)%7));
+  if(!S.tc) S.tc = {week: iso(mondayOf(new Date())), rows:[], status:'idle', builtFor:null, collapsed:(()=>{ try{ return localStorage.getItem('fc_tc_closed')==='1'; }catch(e){ return false; } })()};
+  const tcId = () => (S.myEmail||'').toLowerCase() + '|' + S.tc.week;
+  const tcJobs = () => S.jobs.slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
+  const tcName = key => { const c = TC_CATS.find(x=>x[0]===key); if(c) return c[1]; const j = S.jobs.find(x=>x.id===key); return j ? (j.name||'Untitled job') : ''; };
+  const tcKeyFor = name => { const t = String(name||'').trim().toLowerCase(); if(!t) return '';
+    const c = TC_CATS.find(x=>x[1].toLowerCase()===t); if(c) return c[0];
+    const j = S.jobs.find(x=>String(x.name||'').trim().toLowerCase()===t); return j ? j.id : null; };
+  const tcPhases = () => [...steps().map(st=>st.name), 'Construction', 'Other'];
+  const tcColor = r => { if(!r.cat || r.cat[0]==='@') return '#9AA5AB'; if(r.phase==='Construction') return prodFill(); if(r.phase==='Other' || !r.phase) return '#9AA5AB';
+    const st = steps().find(x=>x.name===r.phase); return st ? stepFill({name:st.name, dept:((st.dept||'Other').trim()||'Other')}) : '#9AA5AB'; };
+  // the phase a job is in partway through the chosen week, used as the starting pick
+  function tcPhaseNow(jobId){
+    const j = S.jobs.find(x=>x.id===jobId); const plan = j && jobPlan(j); if(!plan) return '';
+    const d = dayNum(addDays(parseDate(S.tc.week), 2));
+    const hit = plan.filter(r=>r.s<=d && r.e>d && !(steps().find(x=>x.name===r.name)||{}).withPrev);
+    const r = hit[hit.length-1] || plan.find(r=>r.s>d) || plan[plan.length-1];
+    return r ? (r.dept===PROD ? 'Construction' : r.name) : '';
+  }
+  const tcNewRow = () => ({id:'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), cat:'', phase:'', hours:[null,null,null,null,null,null,null]});
+  async function tcLoad(){
+    S.tc.status = 'loading'; S.tc.builtFor = null; renderTimeCard(true);
+    let rows = null;
+    if(S.sb && S.myEmail){
+      const r = await S.sb.from('fc_time').select('data').eq('id', tcId()).maybeSingle();
+      if(r.error){ S.tc.status = /relation|does not exist|schema cache/i.test(r.error.message||'') ? 'nosetup' : 'error'; renderTimeCard(true); return; }
+      rows = r.data && r.data.data && Array.isArray(r.data.data.rows) ? r.data.data.rows : null;
+    } else { try{ rows = JSON.parse(localStorage.getItem('fc_tc_'+tcId())||'null'); }catch(e){} }
+    S.tc.rows = rows && rows.length ? rows : [tcNewRow(), tcNewRow(), tcNewRow()];
+    S.tc.status = 'ready'; renderTimeCard(true);
+  }
+  let tcTimer = null;
+  function tcSave(){
+    clearTimeout(tcTimer); tcStatus('Saving…');
+    tcTimer = setTimeout(async ()=>{
+      const rows = S.tc.rows.filter(r=>r.cat || r.hours.some(h=>h>0)).map(r=>({...r}));
+      try{
+        if(S.sb && S.myEmail){
+          const r = await S.sb.from('fc_time').upsert({id:tcId(), email:(S.myEmail||'').toLowerCase(), week:S.tc.week, data:{rows}, updated_at:new Date().toISOString()});
+          if(r.error) throw r.error;
+        } else { try{ localStorage.setItem('fc_tc_'+tcId(), JSON.stringify(rows)); }catch(e){} }
+        tcStatus('Saved');
+      }catch(e){ tcStatus(/relation|does not exist|schema cache/i.test(e.message||'') ? 'Time cards aren’t set up in the database yet.' : 'Couldn’t save. Check your connection and try again.', true); }
+    }, 600);
+  }
+  function tcStatus(t, bad){ const el = $('tcStatus'); if(el){ el.textContent = t; el.classList.toggle('bad', !!bad); } }
+  function tcTotals(){
+    const box = $('timeCard'); if(!box) return;
+    const days = [0,0,0,0,0,0,0]; let all = 0;
+    S.tc.rows.forEach(r=>{ let t = 0; r.hours.forEach((h,i)=>{ const v = parseFloat(h)||0; days[i]+=v; t+=v; }); all += t;
+      const cell = box.querySelector(`tr[data-tcr="${r.id}"] .tct`); if(cell) cell.textContent = t ? fmtH(t) : '–'; });
+    days.forEach((v,i)=>{ const c = box.querySelector(`[data-tcday="${i}"]`); if(c) c.textContent = v ? fmtH(v) : '–'; });
+    const w = box.querySelector('.tcall'); if(w) w.textContent = fmtH(all);
+    const hd = $('tcHeadTotal'); if(hd) hd.textContent = `${fmtH(all)} hours this week`;
+  }
+  const fmtH = v => (Math.round(v*100)/100).toLocaleString('en-US',{maximumFractionDigits:2});
+  function renderTimeCard(force){
+    const box = $('timeCard');
+    if(S.tab!=='home' || !S.myEmail && S.sb){ box.hidden = true; return; }
+    box.hidden = false;
+    // keep the list of jobs current without disturbing whatever is being typed
+    const dl = `<option value="EOS"></option><option value="Schedule"></option><option value="Misc"></option>` + tcJobs().map(j=>`<option value="${esc(j.name||'Untitled job')}"></option>`).join('');
+    if($('tcJobList')) $('tcJobList').innerHTML = dl;
+    if(!force && S.tc.builtFor===S.tc.week+S.tc.status) return;
+    if(S.tc.status==='idle'){ tcLoad(); return; }
+    S.tc.builtFor = S.tc.week+S.tc.status;
+    const mon = parseDate(S.tc.week), today = iso(new Date());
+    const dayDates = TC_DAYS.map((d,i)=>addDays(mon,i));
+    const thisWk = S.tc.week===iso(mondayOf(new Date()));
+    let h = `<div class="tchead"><button type="button" class="tctoggle" id="tcToggle" aria-expanded="${!S.tc.collapsed}"><span class="tcchev">${S.tc.collapsed?'▸':'▾'}</span><h2 class="ht">Time card</h2></button>
+      <span class="tcsum" id="tcHeadTotal"></span>
+      <div class="tcweek"><button type="button" class="ghost" id="tcPrev" aria-label="Previous week">‹</button><span class="tcrange">${fmtShort(mon)} to ${fmtDate(addDays(mon,6))}</span><button type="button" class="ghost" id="tcNext" aria-label="Next week">›</button>${thisWk?'':`<button type="button" class="linkbtn" id="tcThis">This week</button>`}</div>${S.tc.status==='ready'&&!S.tc.collapsed?`<button type="button" class="ghost tcprint" id="tcPrint">Print time sheet</button>`:''}</div>`;
+    if(!S.tc.collapsed){
+      if(S.tc.status==='loading') h += `<p class="fixed">Loading your hours…</p>`;
+      else if(S.tc.status==='nosetup') h += `<p class="formerr">Time cards aren’t set up in the database yet. Run the time card setup script in Supabase, then refresh.</p>`;
+      else if(S.tc.status==='error') h += `<p class="formerr">Couldn’t load your hours. Refresh to try again.</p>`;
+      else {
+        h += `<datalist id="tcJobList">${dl}</datalist><div class="tablewrap tcwrap"><table class="tc"><thead><tr><th class="tcjob">Job or category, and phase</th>${dayDates.map((d,i)=>`<th class="tcd${iso(d)===today?' today':''}${i>4?' wkend':''}">${TC_DAYS[i]}<span>${d.getMonth()+1}/${d.getDate()}</span></th>`).join('')}<th class="tcd">Total</th><th></th></tr></thead><tbody>`;
+        S.tc.rows.forEach(r=>{
+          const isCat = r.cat && r.cat[0]==='@';
+          h += `<tr data-tcr="${r.id}" style="--tcc:${tcColor(r)}">
+            <td class="tcjob"><input data-tcf="job" list="tcJobList" value="${esc(tcName(r.cat))}" placeholder="Start typing a job…" aria-label="Job or category" autocomplete="off"><select data-tcf="phase" aria-label="Phase"${isCat||!r.cat?' disabled':''}>${isCat?'<option value="">—</option>':`<option value="">Pick a phase</option>${tcPhases().map(p=>`<option value="${esc(p)}"${p===r.phase?' selected':''}>${esc(p)}</option>`).join('')}`}</select></td>
+            ${r.hours.map((v,i)=>`<td class="tcd${iso(dayDates[i])===today?' today':''}${i>4?' wkend':''}"><input data-tcf="h" data-i="${i}" type="number" inputmode="decimal" min="0" max="24" step="0.25" value="${v>0?v:''}" aria-label="${TC_DAYS[i]} hours"></td>`).join('')}
+            <td class="tcd tct"></td>
+            <td><button type="button" class="rm" data-tcdel aria-label="Remove this row">×</button></td></tr>`;
+        });
+        h += `</tbody><tfoot><tr><td><button type="button" class="ghost" id="tcAdd">Add a row</button></td>${dayDates.map((d,i)=>`<td class="tcd${iso(d)===today?' today':''}${i>4?' wkend':''}" data-tcday="${i}"></td>`).join('')}<td class="tcd tcall"></td><td></td></tr></tfoot></table></div>
+          <p class="tcfoot"><span id="tcStatus" class="fixed"></span></p>`;
+      }
+    }
+    box.innerHTML = h; tcTotals();
+  }
+  $('timeCard').addEventListener('click', e=>{
+    const t = e.target.closest('button'); if(!t) return;
+    if(t.id==='tcToggle'){ S.tc.collapsed = !S.tc.collapsed; try{ localStorage.setItem('fc_tc_closed', S.tc.collapsed?'1':'0'); }catch(err){} renderTimeCard(true); return; }
+    if(t.id==='tcPrev' || t.id==='tcNext' || t.id==='tcThis'){
+      S.tc.week = t.id==='tcThis' ? iso(mondayOf(new Date())) : iso(addDays(parseDate(S.tc.week), t.id==='tcPrev' ? -7 : 7));
+      tcLoad(); return; }
+    if(t.id==='tcPrint'){ printTimeSheet(); return; }
+    if(t.id==='tcAdd'){ S.tc.rows.push(tcNewRow()); renderTimeCard(true); const ins = $('timeCard').querySelectorAll('[data-tcf="job"]'); ins[ins.length-1].focus(); return; }
+    if(t.hasAttribute('data-tcdel')){ const id = t.closest('tr').dataset.tcr; S.tc.rows = S.tc.rows.filter(r=>r.id!==id); if(!S.tc.rows.length) S.tc.rows.push(tcNewRow()); renderTimeCard(true); tcSave(); }
+  });
+  $('timeCard').addEventListener('input', e=>{
+    const f = e.target.dataset.tcf; if(f!=='h') return;
+    const r = S.tc.rows.find(x=>x.id===e.target.closest('tr').dataset.tcr); if(!r) return;
+    const v = parseFloat(e.target.value); r.hours[+e.target.dataset.i] = v>0 ? Math.min(24, Math.round(v*100)/100) : null;
+    tcTotals(); tcSave();
+  });
+  $('timeCard').addEventListener('change', e=>{
+    const f = e.target.dataset.tcf; if(!f || f==='h') return;
+    const tr = e.target.closest('tr'), r = S.tc.rows.find(x=>x.id===tr.dataset.tcr); if(!r) return;
+    if(f==='job'){
+      const key = tcKeyFor(e.target.value);
+      e.target.classList.toggle('bad', key===null);
+      if(key===null){ tcStatus('Pick a job or category from the list.', true); return; }
+      const changed = key!==r.cat; r.cat = key;
+      if(changed){ r.phase = key && key[0]!=='@' ? tcPhaseNow(key) : ''; }
+      renderTimeCard(true); tcSave();
+      const ph = $('timeCard').querySelector(`tr[data-tcr="${r.id}"] [data-tcf="phase"]`); if(ph && !ph.disabled) ph.focus();
+    } else if(f==='phase'){ r.phase = e.target.value; tr.style.setProperty('--tcc', tcColor(r)); tcSave(); }
+  });
+
+  // ---------- printing ----------
+  function printHTML(html){
+    $('printSheet').innerHTML = html; document.body.classList.add('printing');
+    const done = () => { document.body.classList.remove('printing'); $('printSheet').innerHTML = ''; window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    setTimeout(()=>{ window.print(); setTimeout(done, 1000); }, 50);
+  }
+  const personByEmail = e => people().find(p=>(p.email||'').toLowerCase()===String(e||'').toLowerCase());
+  function printTimeSheet(){
+    const mon = parseDate(S.tc.week), days = TC_DAYS.map((d,i)=>addDays(mon,i));
+    const rows = S.tc.rows.filter(r=>r.cat && r.hours.some(h=>h>0));
+    const p = personByEmail(S.myEmail), name = p ? p.name : S.myEmail;
+    const tot = [0,0,0,0,0,0,0]; let all = 0;
+    let h = `<div class="ps"><div class="pshead"><div><p class="psco">TR Design Build</p><h1>Time sheet</h1></div>
+      <table class="psmeta"><tr><th>Name</th><td>${esc(name)}</td></tr><tr><th>Week</th><td>${fmtDate(mon)} to ${fmtDate(addDays(mon,6))}</td></tr></table></div>
+      <table class="pst"><thead><tr><th>Job or category</th><th>Phase</th>${days.map((d,i)=>`<th class="n">${TC_DAYS[i]}<br>${d.getMonth()+1}/${d.getDate()}</th>`).join('')}<th class="n">Total</th></tr></thead><tbody>`;
+    rows.forEach(r=>{ let t = 0;
+      h += `<tr><td>${esc(tcName(r.cat))}</td><td>${esc(r.cat[0]==='@' ? '' : (r.phase||''))}</td>${r.hours.map((v,i)=>{ const x = parseFloat(v)||0; tot[i]+=x; t+=x; return `<td class="n">${x?fmtH(x):''}</td>`; }).join('')}<td class="n b">${fmtH(t)}</td></tr>`; all += t; });
+    if(!rows.length) h += `<tr><td colspan="10">No hours entered this week.</td></tr>`;
+    h += `</tbody><tfoot><tr><td colspan="2">Total</td>${tot.map(v=>`<td class="n">${v?fmtH(v):''}</td>`).join('')}<td class="n">${fmtH(all)}</td></tr></tfoot></table>
+      <div class="pssign"><div><span></span>Employee signature</div><div><span></span>Date</div><div><span></span>Approved by</div></div>
+      <p class="psnote">Printed ${fmtDate(new Date())} from TR Hub</p></div>`;
+    printHTML(h);
+  }
+
+  // ---------- hours report (admins): totals by job, phase and person ----------
+  if(!S.hr) S.hr = {from: iso(addDays(mondayOf(new Date()), -7*12)), to: iso(addDays(mondayOf(new Date()), 6)), job:'', person:'', g1:'job', g2:'phase', entries:null, status:'idle', loadedFor:''};
+  const HR_GROUPS = [['job','Job'],['phase','Phase'],['person','Person'],['week','Week']];
+  async function hrLoad(){
+    S.hr.status = 'loading'; renderHours(true);
+    const from = iso(mondayOf(parseDate(S.hr.from))), to = S.hr.to;
+    let rows = [];
+    if(S.sb){
+      const r = await S.sb.from('fc_time').select('email,week,data').gte('week', from).lte('week', to);
+      if(r.error){ S.hr.status = /relation|does not exist|schema cache/i.test(r.error.message||'') ? 'nosetup' : 'error'; renderHours(true); return; }
+      rows = r.data || [];
+    } else {
+      for(let i=0;i<localStorage.length;i++){ const k = localStorage.key(i); if(!k.startsWith('fc_tc_')) continue; const [em, wk] = k.slice(6).split('|'); try{ rows.push({email:em, week:wk, data:{rows:JSON.parse(localStorage.getItem(k))}}); }catch(e){} }
+    }
+    // one entry per day of hours, limited to the chosen dates
+    const ents = [], f = dayNum(parseDate(S.hr.from)), t = dayNum(parseDate(S.hr.to));
+    rows.forEach(w=>{ const mon = parseDate(String(w.week).slice(0,10)); (w.data && w.data.rows || []).forEach(r=>{ if(!r.cat) return;
+      (r.hours||[]).forEach((v,i)=>{ const x = parseFloat(v)||0; if(!x) return; const d = addDays(mon,i), dn = dayNum(d); if(dn<f || dn>t) return;
+        ents.push({email:w.email, date:d, week:iso(mon), cat:r.cat, phase: r.cat[0]==='@' ? '—' : (r.phase||'No phase'), hours:x}); }); }); });
+    S.hr.entries = ents; S.hr.status = 'ready'; S.hr.loadedFor = S.hr.from+S.hr.to; renderHours(true);
+  }
+  const hrPerson = e => { const p = personByEmail(e); return p ? p.name : e; };
+  const hrKey = (g, x) => g==='job' ? tcName(x.cat) || 'Deleted job' : g==='phase' ? x.phase : g==='person' ? hrPerson(x.email) : `Week of ${fmtShort(parseDate(x.week))}`;
+  function hrFiltered(){ return (S.hr.entries||[]).filter(x=>(!S.hr.job || x.cat===S.hr.job) && (!S.hr.person || x.email.toLowerCase()===S.hr.person)); }
+  function hrGroups(){
+    const list = hrFiltered(), m = new Map();
+    list.forEach(x=>{ const a = hrKey(S.hr.g1,x), b = S.hr.g2 ? hrKey(S.hr.g2,x) : '';
+      if(!m.has(a)) m.set(a,{name:a, hours:0, sub:new Map()}); const g = m.get(a); g.hours += x.hours;
+      if(b) g.sub.set(b, (g.sub.get(b)||0) + x.hours); });
+    const order = (g, arr) => g==='week' ? arr.sort((a,b)=>String(a.name).localeCompare(String(b.name))) : arr.sort((a,b)=>b.hours-a.hours);
+    const out = order(S.hr.g1, [...m.values()]).map(g=>({...g, sub: order(S.hr.g2, [...g.sub.entries()].map(([name,hours])=>({name,hours})))}));
+    return {groups:out, total:list.reduce((t,x)=>t+x.hours,0), count:list.length};
+  }
+  function renderHours(force){
+    const box = $('hoursRpt');
+    if(S.hr.status==='idle'){ hrLoad(); return; }
+    if(!force && S.hr.builtOnce && box.contains(document.activeElement)) return;
+    S.hr.builtOnce = true;
+    const g1n = (HR_GROUPS.find(x=>x[0]===S.hr.g1)||[])[1], g2n = (HR_GROUPS.find(x=>x[0]===S.hr.g2)||[])[1];
+    const peopleOpts = [...new Map([...(people().filter(p=>p.email).map(p=>[p.email.toLowerCase(), p.name])), ...((S.hr.entries||[]).map(x=>[x.email.toLowerCase(), hrPerson(x.email)]))]).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
+    let h = `<div class="hrfilters">
+      <label>From <input type="date" id="hrFrom" value="${esc(S.hr.from)}"></label>
+      <label>To <input type="date" id="hrTo" value="${esc(S.hr.to)}"></label>
+      <label>Job <select id="hrJob"><option value="">All jobs and categories</option>${TC_CATS.map(([k,n])=>`<option value="${k}"${S.hr.job===k?' selected':''}>${n}</option>`).join('')}${tcJobs().map(j=>`<option value="${esc(j.id)}"${S.hr.job===j.id?' selected':''}>${esc(j.name||'Untitled job')}</option>`).join('')}</select></label>
+      <label>Person <select id="hrPerson"><option value="">Everyone</option>${peopleOpts.map(([e,n])=>`<option value="${esc(e)}"${S.hr.person===e?' selected':''}>${esc(n)}</option>`).join('')}</select></label>
+      <label>Total by <select id="hrG1">${HR_GROUPS.map(([k,n])=>`<option value="${k}"${S.hr.g1===k?' selected':''}>${n}</option>`).join('')}</select></label>
+      <label>Then by <select id="hrG2"><option value="">Nothing</option>${HR_GROUPS.filter(x=>x[0]!==S.hr.g1).map(([k,n])=>`<option value="${k}"${S.hr.g2===k?' selected':''}>${n}</option>`).join('')}</select></label>
+      <span class="hrbtns"><button type="button" class="ghost" id="hrPrint">Print</button><button type="button" class="ghost" id="hrCsv">Download spreadsheet</button></span></div>`;
+    if(S.hr.status==='loading') h += `<p class="fixed">Loading hours…</p>`;
+    else if(S.hr.status==='nosetup') h += `<p class="formerr">Time cards aren’t set up in the database yet. Run the time card setup script in Supabase, then refresh.</p>`;
+    else if(S.hr.status==='error') h += `<p class="formerr">Couldn’t load hours. Refresh to try again.</p>`;
+    else {
+      const r = hrGroups();
+      h += `<p class="summary" style="margin:14px 0">${r.count ? `<b>${fmtH(r.total)} hours</b> from ${fmtDate(parseDate(S.hr.from))} to ${fmtDate(parseDate(S.hr.to))}${S.hr.job?` on <b>${esc(tcName(S.hr.job))}</b>`:''}${S.hr.person?` by <b>${esc(hrPerson(S.hr.person))}</b>`:''}.` : 'No hours logged for these choices.'}</p>`;
+      if(r.count){
+        h += `<div class="tablewrap"><table class="hr"><thead><tr><th>${esc(g1n)}${g2n?` and ${esc(g2n.toLowerCase())}`:''}</th><th class="n">Hours</th><th class="n">Share</th><th class="hrbar"></th></tr></thead><tbody>`;
+        const max = Math.max(...r.groups.map(g=>g.hours));
+        r.groups.forEach(g=>{
+          h += `<tr class="hrg"><td>${esc(g.name)}</td><td class="n">${fmtH(g.hours)}</td><td class="n">${Math.round(g.hours/r.total*100)}%</td><td class="hrbar"><span style="width:${g.hours/max*100}%"></span></td></tr>`;
+          g.sub.forEach(x=>{ h += `<tr class="hrs"><td>${esc(x.name)}</td><td class="n">${fmtH(x.hours)}</td><td class="n">${Math.round(x.hours/g.hours*100)}%</td><td class="hrbar"><span class="lt" style="width:${x.hours/max*100}%"></span></td></tr>`; });
+        });
+        h += `</tbody><tfoot><tr><td>Total</td><td class="n">${fmtH(r.total)}</td><td class="n">100%</td><td></td></tr></tfoot></table></div>`;
+      }
+    }
+    box.innerHTML = h;
+  }
+  $('hoursRpt').addEventListener('change', e=>{
+    const id = e.target.id, v = e.target.value;
+    if(id==='hrFrom' || id==='hrTo'){ if(!parseDate(v)) return; S.hr[id==='hrFrom'?'from':'to'] = v; if(S.hr.from > S.hr.to){ const t = S.hr.from; S.hr.from = S.hr.to; S.hr.to = t; } hrLoad(); return; }
+    if(id==='hrJob') S.hr.job = v; else if(id==='hrPerson') S.hr.person = v;
+    else if(id==='hrG1'){ S.hr.g1 = v; if(S.hr.g2===v) S.hr.g2 = ''; } else if(id==='hrG2') S.hr.g2 = v; else return;
+    renderHours(true);
+  });
+  $('hoursRpt').addEventListener('click', e=>{
+    if(e.target.id==='hrPrint'){
+      const r = hrGroups(), g1n = (HR_GROUPS.find(x=>x[0]===S.hr.g1)||[])[1], g2n = (HR_GROUPS.find(x=>x[0]===S.hr.g2)||[])[1];
+      let h = `<div class="ps"><div class="pshead"><div><p class="psco">TR Design Build</p><h1>Hours by ${esc(g1n.toLowerCase())}${g2n?` and ${esc(g2n.toLowerCase())}`:''}</h1></div>
+        <table class="psmeta"><tr><th>Dates</th><td>${fmtDate(parseDate(S.hr.from))} to ${fmtDate(parseDate(S.hr.to))}</td></tr><tr><th>Job</th><td>${S.hr.job?esc(tcName(S.hr.job)):'All'}</td></tr><tr><th>Person</th><td>${S.hr.person?esc(hrPerson(S.hr.person)):'Everyone'}</td></tr></table></div>
+        <table class="pst"><thead><tr><th>${esc(g1n)}</th><th class="n">Hours</th><th class="n">Share</th></tr></thead><tbody>`;
+      r.groups.forEach(g=>{ h += `<tr><td class="b">${esc(g.name)}</td><td class="n b">${fmtH(g.hours)}</td><td class="n">${r.total?Math.round(g.hours/r.total*100):0}%</td></tr>`;
+        g.sub.forEach(x=>{ h += `<tr><td style="padding-left:22px">${esc(x.name)}</td><td class="n">${fmtH(x.hours)}</td><td class="n">${Math.round(x.hours/g.hours*100)}%</td></tr>`; }); });
+      h += `</tbody><tfoot><tr><td>Total</td><td class="n">${fmtH(r.total)}</td><td class="n">100%</td></tr></tfoot></table><p class="psnote">Printed ${fmtDate(new Date())} from TR Hub</p></div>`;
+      printHTML(h); return;
+    }
+    if(e.target.id==='hrCsv'){
+      const q = v => `"${String(v).replace(/"/g,'""')}"`;
+      const lines = [['Date','Person','Email','Job or category','Phase','Hours'].join(',')].concat(
+        hrFiltered().slice().sort((a,b)=>a.date-b.date).map(x=>[iso(x.date), hrPerson(x.email), x.email, tcName(x.cat)||'Deleted job', x.phase, x.hours].map(q).join(',')));
+      const blob = new Blob([lines.join('\r\n')], {type:'text/csv'}), a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = `TR-hours-${S.hr.from}-to-${S.hr.to}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    }
+  });
+
+  // My list: time card on the left, to-dos and materials on the right
+  function homeLayout(on){
+    document.body.classList.toggle('homepage', on);
+    if(S.homeCols===on) return; S.homeCols = on;
+    const cols = $('homeCols'); cols.hidden = !on;
+    if(on){ $('homeLeft').append($('timeCard')); $('homeRight').append($('homePick'), $('homeTodos'), $('tableWrap')); }
+    else { const at = $('hoursRpt'); at.before($('homePick'), $('timeCard')); at.after($('homeTodos'), $('tableWrap')); }
+  }
   function render(){
     setTimeout(renderZoom,0);
     renderList();
     const ag = aggregate();
-    const sup = S.tab==='supers', sch = S.tab==='schedule', mat = S.tab==='materials', home = S.tab==='home';
+    const sup = S.tab==='supers', sch = S.tab==='schedule', mat = S.tab==='materials', home = S.tab==='home', hrs = S.tab==='hours';
     const meName = home && S.me ? (ownerOptions().find(o=>o.key===S.me)||{}).name : '';
-    $('mainTitle').textContent = home ? (meName ? `${meName}'s list` : 'My list') : sup ? 'Supervisor workload' : sch ? 'Master schedule' : mat ? 'Materials to order' : 'All jobs';
+    $('mainTitle').textContent = hrs ? 'Hours' : home ? (meName ? `${meName}'s list` : 'My list') : sup ? 'Supervisor workload' : sch ? 'Master schedule' : mat ? 'Materials to order' : 'All jobs';
     $('noteMats').hidden = !mat; $('ctBox').hidden = !mat; $('peopleBox').hidden = !mat;
     $('ownerWrap').hidden = !mat; $('matSeg').hidden = !mat; $('msortWrap').hidden = !mat; $('mdateSeg').hidden = !(mat && S.matView==='week');
-    $('noteSupers').hidden = !sup; $('noteBilling').hidden = sup || sch || mat || home; $('noteSched').hidden = !sch; $('tplBox').hidden = !sch;
-    $('legActive').hidden = sup || sch || mat || home;
-    document.querySelector('.toolbar').hidden = home; const oneDept = sch && S.sview==='dept' && S.deptView && S.deptView!=='all';
+    $('noteSupers').hidden = !sup; $('noteBilling').hidden = sup || sch || mat || home || hrs; $('noteSched').hidden = !sch; $('tplBox').hidden = !sch;
+    $('legActive').hidden = sup || sch || mat || home || hrs;
+    document.querySelector('.toolbar').hidden = home || hrs; const oneDept = sch && S.sview==='dept' && S.deptView && S.deptView!=='all';
     $('legLoad').hidden = !(sup || (sch && S.sview==='dept' && !oneDept)); $('legDept').hidden = !(sch && (S.sview!=='dept' || oneDept));
     $('deptWrap').hidden = !(sch && S.sview==='dept');
     $('schedSeg').hidden = !sch;
@@ -1700,8 +2042,10 @@ td.job{padding-left:18px}
     if(!sch) $('tableWrap').classList.remove('tall');
     if(!(sch && S.sview==='board')){ $('table').classList.remove('grid-fixed'); $('table').style.width = ''; }
     if(!mat && !home) $('table').classList.remove('mat');
-    $('homePick').hidden = true; $('homeTodos').hidden = true;
-    if(home){ $('chart').hidden = true; renderHome(); }
+    homeLayout(home);
+    $('homePick').hidden = true; $('homeTodos').hidden = true; if(!home) $('timeCard').hidden = true; $('hoursRpt').hidden = !hrs;
+    if(hrs){ $('chart').hidden = true; $('tableWrap').hidden = true; $('summary').textContent = ''; renderHours(false); }
+    else if(home){ $('chart').hidden = true; renderHome(); renderTimeCard(false); }
     else if(mat){ $('chart').hidden = true; renderMaterials(); }
     else if(sup){ $('chart').hidden = true; renderSupersSummary(ag); renderSupers(ag); }
     else if(sch){ $('chart').hidden = true; renderSchedule(); }
