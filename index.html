@@ -231,6 +231,7 @@ table.durt tr.chg td.dn::after{content:" changed";font-size:12px;font-weight:600
 table.durt tr.chg input{border-color:#C9820A}
 table.durt tr.conrow td{border-top:2px solid var(--rule);font-weight:600}
 .dsum{font-size:14px;margin:10px 0 0}
+.topbar .ver{font-size:12px;color:var(--muted);border:1px solid var(--rule);border-radius:8px;padding:0 6px}
 td[data-drag]{cursor:ns-resize}
 body.moving, body.moving *{cursor:ns-resize!important;user-select:none}
 #dragTip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;font-weight:500;padding:5px 9px;border-radius:5px;white-space:nowrap}
@@ -330,7 +331,7 @@ td.job{padding-left:18px}
 </style>
 </head>
 <body>
-<div class="topbar"><strong>Billing forecast</strong><span>TR Design Build</span><span class="status" id="saveStatus">Loading jobs…</span><span id="whoami"></span><button type="button" class="linkbtn" id="signOut" hidden>Sign out</button></div>
+<div class="topbar"><strong>Billing forecast</strong><span>TR Design Build</span><span class="ver" title="App version">v 2026-11-02b</span><span class="status" id="saveStatus">Loading jobs…</span><span id="whoami"></span><button type="button" class="linkbtn" id="signOut" hidden>Sign out</button></div>
 <div id="auth" hidden>
   <div class="authcard">
     <p class="authbrand">TR Design Build</p>
@@ -1947,6 +1948,9 @@ td.job{padding-left:18px}
     }
     const prev = S.jobs.find(x=>x.id===S.sel);
     if(prev && prev.included===false && fj.status==='design') body.included = false;
+    // keep everything the job window doesn't edit (to-dos and anything added later) so saving never drops it
+    const FORM_KEYS = ['id','name','status','updatedAt','ctype','conStart','materials','supervisor','price','start','duration','durUnit','stepDur','stepDates','revised','invoiced','valueComplete','months','asof','balance','ctc','included'];
+    if(prev) Object.keys(prev).forEach(k=>{ if(!FORM_KEYS.includes(k) && body[k]===undefined) body[k] = prev[k]; });
     const isNew = S.sel==='new';
     const id = isNew ? 'j'+Date.now().toString(36)+Math.random().toString(36).slice(2,6) : S.sel;
     F('save').disabled = true;
