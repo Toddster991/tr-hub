@@ -225,7 +225,12 @@ td.bd:not(.fill) .tkd{color:var(--ink)}
 table.durt{width:100%;border-collapse:collapse}
 table.durt td{padding:3px 4px;border-bottom:1px solid var(--rule);vertical-align:middle;text-align:left;white-space:normal}
 table.durt td.dn{font-size:14px;font-weight:500}
+table.durt td.dn .sub2{display:inline;margin-left:8px}
+table.durt td:nth-child(2){width:84px} table.durt td:nth-child(4){width:150px} table.durt td:nth-child(5){width:36px}
+#f-durs{margin-bottom:16px}
 table.durt td.du{font-size:13px;color:var(--muted);width:34px}
+table.durt th{font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:2px 4px;border-bottom:1px solid var(--ink)}
+table.durt input[type=date]{width:136px;padding:3px 5px;font-size:13px}
 table.durt input{width:72px;padding:4px 6px;font-size:14px}
 table.durt tr.chg td.dn::after{content:" changed";font-size:12px;font-weight:600;color:#C9820A}
 table.durt tr.chg input{border-color:#C9820A}
@@ -331,7 +336,7 @@ td.job{padding-left:18px}
 </style>
 </head>
 <body>
-<div class="topbar"><strong>Billing forecast</strong><span>TR Design Build</span><span class="ver" title="App version">v 2026-11-02c</span><span class="status" id="saveStatus">Loading jobs…</span><span id="whoami"></span><button type="button" class="linkbtn" id="signOut" hidden>Sign out</button></div>
+<div class="topbar"><strong>Billing forecast</strong><span>TR Design Build</span><span class="ver" title="App version">v 2026-11-02d</span><span class="status" id="saveStatus">Loading jobs…</span><span id="whoami"></span><button type="button" class="linkbtn" id="signOut" hidden>Sign out</button></div>
 <div id="auth" hidden>
   <div class="authcard">
     <p class="authbrand">TR Design Build</p>
@@ -482,13 +487,14 @@ td.job{padding-left:18px}
     </div>
   </div>
   <div class="msec" data-secbox="schedule" hidden>
+    <div class="stepdates" id="f-durs"></div>
     <div class="cols">
       <div>
         <div class="field"><label for="f-ctype">Construction type</label><select id="f-ctype"></select></div>
         <div class="field" id="f-constartWrap" hidden><label for="f-constart">Construction started</label><input id="f-constart" type="date"></div>
         <div id="f-phases"></div>
       </div>
-      <div><div class="stepdates" id="f-durs"></div><div class="stepdates" id="f-steps"></div></div>
+      <div><div class="stepdates" id="f-steps"></div></div>
     </div>
   </div>
   <div class="msec" data-secbox="materials" hidden>
@@ -1760,18 +1766,31 @@ td.job{padding-left:18px}
     const fj = formJob();
     if(fj.status!=='design'){ box.innerHTML = ''; return; }
     const unitTxt = st => st.unit==='days' ? 'days' : 'wk';
-    let h = `<p class="calc-h">Step durations</p><p class="fixed" style="font-size:13px;margin:0 0 8px">Standard lengths are filled in. Type a different number to change it for this job only. Kickoff stays put, and everything after the step moves, including production start.</p><table class="durt"><tbody>`;
+    let h = `<p class="calc-h">Step durations</p><p class="fixed" style="font-size:13px;margin:0 0 8px">Standard lengths are filled in. Change the weeks or type the date a step should finish, for this job only. Kickoff stays put, and everything after the step moves, including production start.</p><table class="durt"><thead><tr><th>Step</th><th>Length</th><th></th><th>Ends</th><th></th></tr></thead><tbody>`;
     steps().forEach(st=>{
       const v = S.durEdit[st.name], changed = parseFloat(v)>0 && parseFloat(v)!==defaultDur(S.durEdit, st), lead = st.withPrev ? leadOf(st) : null;
-      h += `<tr data-dstep="${esc(st.name)}"${changed?' class="chg"':''}><td class="dn">${esc(st.name)}${lead?`<span class="sub2">alongside ${esc(lead.name)}, follows its length</span>`:''}</td>
+      h += `<tr data-dstep="${esc(st.name)}"${changed?' class="chg"':''}><td class="dn">${esc(st.name)}<span class="sub2">${lead?`alongside ${esc(lead.name)}, follows its length · `:''}<span class="dst"></span></span></td>
         <td><input type="number" min="0.5" step="0.5" value="${changed?esc(v):''}" placeholder="${esc(defaultDur(S.durEdit, st))}" aria-label="${esc(st.name)} length in ${st.unit==='days'?'days':'weeks'}"></td>
-        <td class="du">${unitTxt(st)}</td><td>${changed?`<button type="button" class="rm" data-dreset title="Use the standard length" aria-label="Use the standard length for ${esc(st.name)}">↺</button>`:''}</td></tr>`;
+        <td class="du">${unitTxt(st)}</td><td><input type="date" data-dend aria-label="${esc(st.name)} finish date"></td><td>${changed?`<button type="button" class="rm" data-dreset title="Use the standard length" aria-label="Use the standard length for ${esc(st.name)}">↺</button>`:''}</td></tr>`;
     });
     const cw = fj.durUnit==='months' ? monthsToWeeks(parseFloat(fj.duration)) : Math.round(parseFloat(fj.duration));
-    h += `<tr class="conrow"><td class="dn">Construction</td><td><input type="number" min="1" step="1" id="f-conwk" value="${cw>0?cw:''}" aria-label="Construction length in weeks"></td><td class="du">wk</td><td></td></tr>`;
+    h += `<tr class="conrow" data-dcon><td class="dn">Construction<span class="sub2"><span class="dst"></span></span></td><td><input type="number" min="1" step="1" id="f-conwk" value="${cw>0?cw:''}" aria-label="Construction length in weeks"></td><td class="du">wk</td><td><input type="date" data-dend aria-label="Construction finish date"></td><td></td></tr>`;
     h += `</tbody></table><p class="dsum" id="f-dsum"></p>`;
     box.innerHTML = h;
-    updateDurSummary();
+    updateDurSummary(); refreshDurDates();
+  }
+  // the job as it stands in the open window, with its hand-set step dates
+  const windowJob = () => ({...formJob(), stepDur:{...(S.durEdit||{})}, stepDates: S.stepEdit && !S.stepEdit.auto ? S.stepEdit.dates : null});
+  // fill in each step's start and finish dates; leave alone the box being typed in
+  function refreshDurDates(){
+    const box = F('durs'); if(!box) return;
+    const plan = jobPlan(windowJob()) || [];
+    box.querySelectorAll('tr[data-dstep],tr[data-dcon]').forEach(tr=>{
+      const r = tr.hasAttribute('data-dcon') ? plan.find(x=>x.dept===PROD) : plan.find(x=>x.name===tr.dataset.dstep);
+      const st = tr.querySelector('.dst'), en = tr.querySelector('[data-dend]');
+      if(st) st.textContent = r ? `starts ${fmtShort(fromDayNum(r.s))}` : '';
+      if(en && en!==document.activeElement){ en.value = r ? iso(fromDayNum(r.e-1)) : ''; en.min = r ? iso(fromDayNum(r.s)) : ''; }
+    });
   }
   // apply a step length change in the open job window, pushing later steps and production start
   function applyPush(name, v){
@@ -1999,15 +2018,36 @@ td.job{padding-left:18px}
   ['start','dur','unit'].forEach(id=>F(id).addEventListener('change', renderStepFields));
   ['start','dur','unit'].forEach(id=>F(id).addEventListener('change', renderDurFields));
   F('durs').addEventListener('input', e=>{
+    if(e.target.matches('[data-dend]')) return;
     if(e.target.id==='f-conwk'){ const v = parseFloat(e.target.value); if(v>0){ F('dur').value = Math.round(v); F('unit').value = 'weeks'; } }
     else { const tr = e.target.closest('[data-dstep]'); if(!tr) return; const n = tr.dataset.dstep, v = parseFloat(e.target.value);
       applyPush(n, v);
       const st = steps().find(x=>x.name===n), chg = !!(v>0 && st && v!==defaultDur(S.durEdit, st));
       // parallel steps that follow this one show their new length right away
-      F('durs').querySelectorAll('tr[data-dstep]').forEach(row=>{ const ps = steps().find(x=>x.name===row.dataset.dstep); if(ps && ps.withPrev){ const inp = row.querySelector('input'); inp.placeholder = defaultDur(S.durEdit, ps); } });
+      F('durs').querySelectorAll('tr[data-dstep]').forEach(row=>{ const ps = steps().find(x=>x.name===row.dataset.dstep); if(ps && ps.withPrev){ const inp = row.querySelector('input[type=number]'); inp.placeholder = defaultDur(S.durEdit, ps); } });
       tr.classList.toggle('chg', chg);
       tr.lastElementChild.innerHTML = chg ? `<button type="button" class="rm" data-dreset title="Use the standard length" aria-label="Use the standard length for ${esc(n)}">↺</button>` : ''; }
-    F('err').hidden = true; updateDurSummary(); renderStepFields(); renderEditorExtras(); preview();
+    F('err').hidden = true; updateDurSummary(); refreshDurDates(); renderStepFields(); renderEditorExtras(); preview();
+  });
+  // typing a finish date: work out the length from it and push everything after
+  F('durs').addEventListener('change', e=>{
+    if(!e.target.matches('[data-dend]')) return;
+    const d = parseDate(e.target.value); if(!d) return;
+    const tr = e.target.closest('tr'), plan = jobPlan(windowJob()) || [];
+    if(tr.hasAttribute('data-dcon')){
+      const con = plan.find(x=>x.dept===PROD); if(!con) return;
+      const wk = Math.max(1, Math.round((dayNum(d) - con.s + 1) / 7));
+      F('dur').value = wk; F('unit').value = 'weeks'; $('f-conwk').value = wk;
+    } else {
+      const n = tr.dataset.dstep, r = plan.find(x=>x.name===n), st = steps().find(x=>x.name===n); if(!r || !st) return;
+      const end = Math.max(r.s, dayNum(d)), newLen = end - r.s + 1, oldLen = r.e - r.s;
+      if(newLen===oldLen) return;
+      const unit = st.unit==='days' ? 1 : 7, cur = parseFloat(S.durEdit[n]) || defaultDur(S.durEdit, st);
+      applyPush(n, Math.max(1/unit, cur + (newLen - oldLen)/unit));
+      e.target.blur();
+      renderDurFields();
+    }
+    F('err').hidden = true; updateDurSummary(); refreshDurDates(); renderStepFields(); renderEditorExtras(); preview();
   });
   F('durs').addEventListener('click', e=>{
     const b = e.target.closest('[data-dreset]'); if(!b) return;
