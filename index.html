@@ -808,6 +808,28 @@ td.job{padding-left:18px}
     const o = j && j.stepDur && typeof j.stepDur==='object' ? parseFloat(j.stepDur[st.name]) : NaN;
     return o > 0 ? Math.max(1, Math.round(o * (st.unit==='days' ? 1 : 7))) : stepDays(st);
   }
+  // Change one step's length on a job (newDur in the step's own unit; empty = standard).
+  // Kickoff stays where it is; every step after it, and the production start, move by the same amount.
+  function pushFrom(j, name, newDur){
+    const st = steps().find(x=>x.name===name); if(!st || !parseDate(j.start)) return null;
+    const base = {...j, stepDates:null};
+    const dur0 = {...(j.stepDur && typeof j.stepDur==='object' ? j.stepDur : {})}, dur1 = {...dur0};
+    if(newDur > 0 && newDur !== parseFloat(st.dur)) dur1[name] = Math.round(newDur*100)/100; else delete dur1[name];
+    const p0 = jobPlan({...base, stepDur:dur0}, false), p1 = jobPlan({...base, stepDur:dur1}, false);
+    if(!p0 || !p1) return null;
+    const span = p => p.find(r=>r.dept===PROD).s - p[0].s;
+    const delta = span(p1) - span(p0);
+    const lenDelta = stepDaysFor({stepDur:dur1}, st) - stepDaysFor({stepDur:dur0}, st);
+    const idx = steps().findIndex(x=>x.name===name);
+    const sd = JSON.parse(JSON.stringify(j.stepDates && typeof j.stepDates==='object' ? j.stepDates : {}));
+    Object.keys(sd).forEach(n=>{
+      const i = steps().findIndex(x=>x.name===n), o = sd[n], a = parseDate(o.start), b = parseDate(o.end);
+      if(!a || !b) return;
+      if(n===name) sd[n] = {start:o.start, end:iso(addDays(b, Math.max(-(dayNum(b)-dayNum(a)), lenDelta)))};
+      else if(i > idx) sd[n] = {start:iso(addDays(a, delta)), end:iso(addDays(b, delta))};
+    });
+    return {stepDur:dur1, start:iso(addDays(parseDate(j.start), delta)), stepDates:sd, delta};
+  }
   function jobPlan(j, useOverrides=true){
     const out = [];
     if(j.status==='design'){
@@ -1722,7 +1744,7 @@ td.job{padding-left:18px}
     const fj = formJob();
     if(fj.status!=='design'){ box.innerHTML = ''; return; }
     const unitTxt = st => st.unit==='days' ? 'days' : 'wk';
-    let h = `<p class="calc-h">Step durations</p><p class="fixed" style="font-size:13px;margin:0 0 8px">Standard lengths are filled in. Type a different number to change it for this job only.</p><table class="durt"><tbody>`;
+    let h = `<p class="calc-h">Step durations</p><p class="fixed" style="font-size:13px;margin:0 0 8px">Standard lengths are filled in. Type a different number to change it for this job only. Kickoff stays put, and everything after the step moves, including production start.</p><table class="durt"><tbody>`;
     steps().forEach(st=>{
       const v = S.durEdit[st.name], changed = parseFloat(v)>0 && parseFloat(v)!==parseFloat(st.dur);
       h += `<tr data-dstep="${esc(st.name)}"${changed?' class="chg"':''}><td class="dn">${esc(st.name)}${st.withPrev?'<span class="sub2">alongside the step before</span>':''}</td>
@@ -1734,6 +1756,15 @@ td.job{padding-left:18px}
     h += `</tbody></table><p class="dsum" id="f-dsum"></p>`;
     box.innerHTML = h;
     updateDurSummary();
+  }
+  // apply a step length change in the open job window, pushing later steps and production start
+  function applyPush(name, v){
+    const fj = formJob();
+    const r = pushFrom({...fj, stepDur:{...S.durEdit}, stepDates: S.stepEdit && !S.stepEdit.auto ? S.stepEdit.dates : {}}, name, v);
+    if(!r){ if(v>0) S.durEdit[name] = v; else delete S.durEdit[name]; return; }
+    S.durEdit = r.stepDur;
+    if(r.delta) F('start').value = r.start;
+    if(S.stepEdit && !S.stepEdit.auto) S.stepEdit.dates = r.stepDates;
   }
   function updateDurSummary(){
     const el = $('f-dsum'); if(!el) return;
@@ -1751,7 +1782,7 @@ td.job{padding-left:18px}
     let h = `<p class="calc-h">Step dates</p>`;
     if(!auto){ box.innerHTML = h + `<p class="fixed">Enter a production start and duration to see step dates.</p>`; return; }
     h += `<label class="chk"><input type="checkbox" id="f-auto"${S.stepEdit.auto?' checked':''}> Use automatic dates, worked back from production start</label>`;
-    if(!S.stepEdit.auto) h += `<p class="fixed" style="font-size:13px;margin:0 0 6px">Changing a start date moves that step and every step before it. Changing an end date only changes that step's length.</p>`;
+    if(!S.stepEdit.auto) h += `<p class="fixed" style="font-size:13px;margin:0 0 6px">Changing a start date moves that step and every step before it. Changing an end date changes that step's length and pushes everything after it, including production start.</p>`;
     auto.filter(r=>r.dept!==PROD).forEach(r=>{
       const aS = iso(fromDayNum(r.s)), aE = iso(fromDayNum(r.e-1));
       const o = S.stepEdit.dates[r.name];
@@ -1951,7 +1982,7 @@ td.job{padding-left:18px}
   F('durs').addEventListener('input', e=>{
     if(e.target.id==='f-conwk'){ const v = parseFloat(e.target.value); if(v>0){ F('dur').value = Math.round(v); F('unit').value = 'weeks'; } }
     else { const tr = e.target.closest('[data-dstep]'); if(!tr) return; const n = tr.dataset.dstep, v = parseFloat(e.target.value);
-      if(v>0) S.durEdit[n] = v; else delete S.durEdit[n];
+      applyPush(n, v);
       const st = steps().find(x=>x.name===n), chg = !!(v>0 && st && v!==parseFloat(st.dur));
       tr.classList.toggle('chg', chg);
       tr.lastElementChild.innerHTML = chg ? `<button type="button" class="rm" data-dreset title="Use the standard length" aria-label="Use the standard length for ${esc(n)}">↺</button>` : ''; }
@@ -1959,7 +1990,7 @@ td.job{padding-left:18px}
   });
   F('durs').addEventListener('click', e=>{
     const b = e.target.closest('[data-dreset]'); if(!b) return;
-    delete S.durEdit[b.closest('[data-dstep]').dataset.dstep];
+    applyPush(b.closest('[data-dstep]').dataset.dstep, NaN);
     renderDurFields(); renderStepFields(); renderEditorExtras(); preview();
   });
   document.querySelectorAll('[data-sec]').forEach(b=>b.addEventListener('click',()=>showSec(b.dataset.sec)));
@@ -1998,10 +2029,14 @@ td.job{padding-left:18px}
       const delta = dayNum(parseDate(a.value)) - cur(name).s;
       if(delta){ for(let i=0;i<=idx;i++){ const c = cur(auto[i].name); put(auto[i].name, c.s+delta, c.e+delta); } }
     } else {
-      // changing the end only changes this step's length
+      // changing the end changes this step's length and pushes everything after it
       if(!parseDate(b.value)) return;
-      const c = cur(name), e0 = dayNum(parseDate(b.value));
-      put(name, c.s, Math.max(c.s, e0));
+      const c = cur(name), newLen = Math.max(1, dayNum(parseDate(b.value)) - c.s + 1), oldLen = c.e - c.s + 1;
+      const st = steps().find(x=>x.name===name), curDur = parseFloat(S.durEdit[name]) || parseFloat(st.dur);
+      const curDays = st.unit==='days' ? curDur : curDur*7;
+      const nd = (curDays + (newLen - oldLen)) / (st.unit==='days' ? 1 : 7);
+      applyPush(name, Math.max(st.unit==='days' ? 1 : 1/7, nd));
+      renderDurFields();
     }
     renderStepFields(); preview();
   });
@@ -2077,7 +2112,11 @@ td.job{padding-left:18px}
   function movedJob(j, step, weeks, mode='move'){
     if(mode==='resize'){
       if(step==='Construction') return {...j, duration: Math.max(1, constWeeks(j)+weeks), durUnit:'weeks'};
-      return {...j, stepDates: cascadeDates(j, step, 7*weeks, true)};
+      const st = steps().find(x=>x.name===step); if(!st) return j;
+      const cur = parseFloat((j.stepDur||{})[step]) || parseFloat(st.dur) || 1;
+      const nd = st.unit==='days' ? Math.max(1, cur + 7*weeks) : Math.max(0.5, cur + weeks);
+      const r = pushFrom(j, step, nd); if(!r) return j;
+      return {...j, stepDur:r.stepDur, start:r.start, stepDates:r.stepDates};
     }
     if(step==='Construction') return {...j, start: iso(addDays(parseDate(j.start), 7*weeks))};
     return {...j, stepDates: cascadeDates(j, step, 7*weeks)};
@@ -2124,6 +2163,7 @@ td.job{padding-left:18px}
     let fields, undo;
     if(d.step==='Construction' && d.mode==='resize'){ fields = {duration:upd.duration, durUnit:upd.durUnit}; undo = {duration:d.orig.duration, durUnit:d.orig.durUnit}; }
     else if(d.step==='Construction'){ fields = {start:upd.start}; undo = {start:d.orig.start}; }
+    else if(d.mode==='resize'){ fields = {stepDur:upd.stepDur||{}, start:upd.start, stepDates:upd.stepDates||{}}; undo = {stepDur:d.orig.stepDur||{}, start:d.orig.start, stepDates:d.orig.stepDates||{}}; }
     else { fields = {stepDates:upd.stepDates}; undo = {stepDates:d.orig.stepDates||{}}; }
     applyJobFields(d.id, fields);
     showToast(`${esc(d.orig.name||'Job')}: ${esc(dragTipText({...d, preview:upd}))}.`, ()=>applyJobFields(d.id, undo));
